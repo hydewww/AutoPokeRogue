@@ -1,4 +1,5 @@
 import time
+import os
 
 import action
 import command
@@ -8,6 +9,8 @@ import state
 import text
 import keyboard
 from logger import logger
+import browser
+import cv
 
 
 begin_wave = -1
@@ -135,10 +138,8 @@ def choose_reward(sta: str, cmd: command.Command, texts: list[str]):
     action.transfer_item(cmd.from_p, cmd.item, cmd.to_p, double=cmd.double)
     return True
 
+  # screenshot.fullscreen(save_name="rewards/{}".format(cmd_wave))  # for debug
   total = 3 if cmd_wave < 20 else cmd_wave // 10 + 2  # TODO
-
-  screenshot.fullscreen(save_name="rewards/{}".format(cmd_wave))  # for debug
-
   if cmd.act == command.REROLL:
     for _ in range(cmd.times):
       action.choose_reward("reroll", total)
@@ -224,7 +225,7 @@ def new_wave(sta: str, cmd: command.Command, texts: list[str]):
     raise Exception("Not New Wave, state: {}".format(sta))
 
   screenshot.fullscreen(save_name="wave/{}".format(cmd_wave))  # for debug
-  if sta != state.TRAINER_BATTLE and ocr.find_shiny():
+  if sta != state.TRAINER_BATTLE and cv.find_shiny():
     # TODO config
     raise Exception("🌟Shiny Pokemon!")
 
@@ -273,7 +274,7 @@ def proc_command(cmd: command.Command):
       unknown_confirm += 1
       screenshot.fullscreen(save_name="unknown/{}_{}".format(cmd_wave, unknown_confirm))
       keyboard.confirm(keyboard.WaitDialog)
-    elif unknown_times == 7:
+    elif unknown_times == 7:  # TODO
       raise Exception("unknown state")
     time.sleep(1.5)
     sta, texts = state.recognize_state()
@@ -299,10 +300,9 @@ def proc_command(cmd: command.Command):
 
 
 def main():
-  sta, texts = state.recognize_state()
-  reload_game(sta, None, texts, init=True)
-
   generator = command.cmd_generator("daily")
+  browser.init(os.getenv('pokerogue_cookie'))
+
   try:
     for cmds in generator:
       if cmds[0].wave_no < begin_wave:
@@ -314,6 +314,7 @@ def main():
         while proc_command(cmd) is False:
           pass
   finally:
+    browser.close()
     logger.info("max score: {}".format(action.max_ocr_score))
 
 

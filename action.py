@@ -5,6 +5,7 @@ import ocr
 import text
 from logger import logger
 import const
+import cv
 
 max_ocr_score = {
   "pokemon": 0,
@@ -93,7 +94,7 @@ def throw_ball(ball):
   keyboard.confirm(wait=keyboard.WaitShortAction)
 
   # ball recognize
-  cur_index = ocr.ball_cursor_index()
+  cur_index = cv.ball_cursor_index()
   to_index = text.find_in_ocr_texts(ball, const.BALLS, min_score=0.5)[0]
   logger.info("🕹ACT throw {}[{}=>{}]".format(ball, cur_index, to_index))
 
@@ -145,9 +146,6 @@ def choose_reward(reward, total):
   # reward recognize
   min_score = 0.75  # TODO
   rewards = ocr.rewards(cnt=total)
-  for i in range(len(rewards)):
-    if rewards[i].startswith("5x "):
-      rewards[i] = rewards[i][3:]
   index, score, match = text.find_in_ocr_texts(reward, rewards, min_score=min_score)
   max_ocr_score["reward"] = max(max_ocr_score["reward"], score)
   logger.info("🕹ACT choose reward[{}]: {}({:.3f})".format(index, match, score))
@@ -265,9 +263,10 @@ def save_and_quit():
 # transfer item / memory move
 def choose_from_sidebar(name, min_score=1.0):
   global max_ocr_score
-  # recognize from bottom by default, prevent ocr imprecision
+  _, y1, x2, _ = cv.find_arrow()
+  # recognize from bottom by default
   keyboard.up()
-  items = ocr.pokemons_sidebar()
+  items = ocr.pokemons_sidebar(x1=x2, y1=y1)
   index, score, match = text.find_in_ocr_texts(name, items, debug=True)
   index = len(items) - index - 1
   if score <= min_score:
@@ -284,7 +283,7 @@ def choose_from_sidebar(name, min_score=1.0):
   keyboard.down()
 
   # select item
-  index, score, match = text.find_in_ocr_texts(name, ocr.pokemons_sidebar(), debug=True,
+  index, score, match = text.find_in_ocr_texts(name, ocr.pokemons_sidebar(x1=x2, y1=y1), debug=True,
                                                min_score=min_score)
   max_ocr_score["sidebar"] = max(max_ocr_score["sidebar"], score)
   logger.info("🕹ACT choose sidebar[{}]: {}({:.3f})".format(index, match, score))

@@ -1,4 +1,3 @@
-import command
 import text
 from logger import logger
 import const
@@ -73,7 +72,7 @@ def preproc(cmd: str):
   res = (cmd.
          replace("Send in ", "Switch > ").
          replace("Pick ", "Switch > ").
-         replace("Swap ", "Switch ").  # TODO: swap in or swap?
+         replace("Swap ", "Switch ").
          replace(" for ", " > ").  # Pre-switch a for b
          replace(" to ", " > ").
          replace(" + ", " & ").

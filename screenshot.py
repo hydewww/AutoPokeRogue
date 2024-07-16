@@ -1,21 +1,34 @@
-import pyautogui
 import numpy as np
 import os
+from base64 import b64decode
+from PIL import Image
+from io import BytesIO
+import browser
 
-ScreenX1 = 30
-ScreenX2 = 1122
-ScreenY1 = 120
-ScreenY2 = 725
-
-BoxX1 = 50
-BoxX2 = ScreenX2
-BoxY1 = 590
-BoxY2 = ScreenY2
+ORI_WIDTH = browser.CANVAS_ORI_WIDTH
+ORI_HEIGHT = browser.CANVAS_ORI_HEIGHT
+RATIO = browser.RATIO
 
 
-def _proc(img, ratio=2, save_name=None, gray_scale=True):
+def _screenshot_from_browser(crop_params=None):
+  data = browser.screenshot_as_base64()
+  png = b64decode(data)
+  img = Image.open(BytesIO(png))
+  img.save('./screenshot/last.png')  # debug
+  ratio = RATIO
+  if crop_params is None:
+    return [img]
+
+  for i in range(len(crop_params)):
+    x1, y1, x2, y2 = crop_params[i]
+    crop_params[i] = (x1 // ratio, y1 // ratio, x2 // ratio, y2 // ratio)
+  imgs = [img.crop(param) for param in crop_params]
+  imgs[0].save('./screenshot/last.crop.png')  # debug
+  return imgs
+
+
+def _proc(img, save_name=None, gray_scale=True):
   img = img.convert("L") if gray_scale else img  # better for ocr
-  img = img.resize((img.size[0] // ratio, img.size[1] // ratio))
   if save_name:
     fname = "./screenshot/{}.png".format(save_name)
     dname = fname.rsplit("/", 1)[0]
@@ -26,144 +39,123 @@ def _proc(img, ratio=2, save_name=None, gray_scale=True):
 
 
 def fullscreen(save_name=None):
-  img = pyautogui.screenshot(region=(ScreenX1, ScreenY1, ScreenX2 - ScreenX1, ScreenY2 - ScreenY1))
-  return _proc(img, ratio=1, gray_scale=False,
-               save_name=save_name)
+  img = _screenshot_from_browser()[0]
+  return _proc(img, gray_scale=False, save_name=save_name)
 # fullscreen(save_name="wave_0")
 
 
 def chatbox(line=None):
-  y1 = BoxY1
-  y_len = BoxY2 - BoxY1
+  height = 160
+  y1 = 855
+  if line is not None:
+    height //= 2
   if line == 2:
-    y1 = (BoxY1 + BoxY2) // 2
-    y_len //= 2
-  img = pyautogui.screenshot(region=(BoxX1, y1, BoxX2 - BoxX1, y_len))
+    y1 = 950
+  img = _screenshot_from_browser(crop_params=[(0, y1, ORI_WIDTH, y1+height)])[0]
   return _proc(img, save_name="chatbox_{}".format(line))
 
 
 def bottom_screen(save_name=None):
-  y1 = 510
-  img = pyautogui.screenshot(region=(ScreenX1, y1, ScreenX2 - ScreenX1, ScreenY2 - y1))
-  return _proc(img, ratio=1, save_name=save_name)
+  y1 = 690
+  img = _screenshot_from_browser(crop_params=[(0, y1, ORI_WIDTH, ORI_HEIGHT)])[0]
+  return _proc(img, save_name=save_name)
 # bottom_screen(save_name="0")
 
 
 def rival_screen():
-  y1 = 200
-  y2 = 415
-  img = pyautogui.screenshot(region=(ScreenX1, y1, ScreenX2 - ScreenX1, y2 - y1))
-  return _proc(img, ratio=1, gray_scale=False)
+  img = _screenshot_from_browser(crop_params=[(25, 320, 600, 400)])[0]
+  return _proc(img, gray_scale=False)
 
 
-def wave_no(line=1):
-  x1 = 1080
-  y1 = ScreenY1
-  if line == 2:
-    y1 = 172
-  y_len = 150 - ScreenY1
+def wave_nos():
+  x1 = 1840
+  l1_y1, l2_y1 = 0, 100
+  height = 55
+  crop_params = [(x1, l1_y1, ORI_WIDTH-10, l1_y1+height),
+                 (x1, l2_y1, ORI_WIDTH-10, l2_y1+height)]
+  imgs = _screenshot_from_browser(crop_params=crop_params)
 
-  img = pyautogui.screenshot(region=(x1, y1, ScreenX2 - x1, y_len)).convert("L")
+  return [_proc(img, save_name="wave_no_{}".format(idx))
+          for idx, img in enumerate(imgs)]
 
-  return _proc(img, ratio=1, save_name="wave_no_{}".format(line))
 
-
-def action_moves():
-  move1_x1 = BoxX1
-  move1_y1 = BoxY1
-  move4_x1 = (BoxX1 + BoxX2) // 3
-  move4_y1 = (BoxY1 + BoxY2) // 2
-  x_len = move4_x1 - move1_x1
-  y_len = move4_y1 - move1_y1
-
-  img = pyautogui.screenshot(region=(BoxX1, BoxY1, BoxX2 - BoxX1, BoxY2 - BoxY1))
-
-  crop_params = [(0, 0, x_len, y_len),
-                 (x_len, 0, x_len * 2, y_len),
-                 (0, y_len, x_len, y_len * 2),
-                 (x_len, y_len, x_len * 2, y_len * 2)]
-  return [_proc(img.crop(param)) for param in crop_params]
+def fight_moves():
+  move1_x1, move1_y1 = 100, 860
+  move2_x1, move2_y1 = 705, move1_y1
+  move3_x1, move3_y1 = move1_x1, 950
+  move4_x1, move4_y1 = move2_x1, move3_y1
+  move_width = 500
+  move_height = 80
+  crop_params = [(move1_x1, move1_y1, move1_x1+move_width, move1_y1+move_height),
+                 (move2_x1, move2_y1, move2_x1+move_width, move2_y1+move_height),
+                 (move3_x1, move3_y1, move3_x1+move_width, move3_y1+move_height),
+                 (move4_x1, move4_y1, move4_x1+move_width, move4_y1+move_height)]
+  imgs = _screenshot_from_browser(crop_params=crop_params)
+  return [_proc(img, save_name=f'{idx}') for idx, img in enumerate(imgs)]
+# action_moves()
 
 
 def learn_moves(save_prefix=None):
-  # TODO
-  x1 = 515
-  y1 = 233
-  x2 = 760
-  y2 = 442
-  img = pyautogui.screenshot(region=(x1, y1, x2 - x1, y2 - y1))
-
-  move_y_len = (y2-y1) // 4
-  crop_params = [(0, move_y_len*i, x2-x1, move_y_len*(i+1)) for i in range(4)]
-  return [_proc(img.crop(param), save_name="{}_{}".format(save_prefix, idx) if save_prefix else None) for idx, param in enumerate(crop_params)]
+  x1, x2 = 870, 1400
+  y1, y2 = 200, 572
+  move_height = (y2-y1) // 4
+  crop_params = [(x1, y1+move_height*i, x2, y1+move_height*(i+1)) for i in range(4)]
+  imgs = _screenshot_from_browser(crop_params=crop_params)
+  return [_proc(img, save_name="{}_{}".format(save_prefix, idx) if save_prefix else None)
+          for idx, img in enumerate(imgs)]
 # learn_moves(save_prefix="0")
 
 
 def pokemons(double=None, debug=True):
-  img = pyautogui.screenshot()
-
-  # TODO value
-  x_len = 360
-  y_len = 90
-
-  x1 = 260
-  x2 = 1160
+  width, height = 320, 70
+  l_x1, r_x1 = 190, 970
   if double is True:
-    y1 = 460
-    y2 = 900
-    y3 = 355
-    y_span = 605 - 360
-    crop_params = [(x1, y1, x1 + x_len, y1 + y_len),
-                   (x1, y2, x1 + x_len, y2 + y_len)]
-    crop_params.extend([(x2, y3 + i * y_span, x2 + x_len, y3 + i * y_span + y_len) for i in range(4)])
+    p1_y1 = 210
+    p2_y1 = 600
+    p3_y1 = 120
+    y_span = 215
+    crop_params = [(l_x1, p1_y1, l_x1 + width, p1_y1 + height),
+                   (l_x1, p2_y1, l_x1 + width, p2_y1 + height)]
+    crop_params.extend([(r_x1, p3_y1 + i*y_span,
+                         r_x1 + width, p3_y1 + i*y_span + height) for i in range(4)])
   else:
-    y2 = 520
-    y_span = 190
-    crop_params = [(x1, y2, x1 + x_len, y2 + y_len)]
-    crop_params.extend([(x2, y2 + i * y_span, x2 + x_len, y2 + i * y_span + y_len) for i in range(-1, 4)])
-
-  return [_proc(img.crop(param),
-                save_name="pokemon/{}".format(index) if debug else None)
-          for index, param in enumerate(crop_params)]
+    l_y1, r_y2 = 256, 256
+    y_span = 165
+    crop_params = [(l_x1, l_y1, l_x1 + width, l_y1 + height)]
+    crop_params.extend([(r_x1, r_y2 + i*y_span,
+                         r_x1+width, r_y2 + i*y_span + height)
+                        for i in range(-1, 4)])
+  imgs = _screenshot_from_browser(crop_params=crop_params)
+  return [_proc(img,
+                save_name="pokemon/{}".format(idx) if debug else None)
+          for idx, img in enumerate(imgs)]
 
 
 def ball_cursor():
-  # TODO
-  x1 = 750
-  y1 = 210
-  x2 = 785
-  y2 = 535
-  img = pyautogui.screenshot(region=(x1, y1, x2 - x1, y2 - y1)).convert("L")
-
-  return _proc(img, ratio=1)
+  x1, y1 = 1250, 155
+  x2, y2 = 1320, 755
+  img = _screenshot_from_browser(crop_params=[(x1, y1, x2, y2)])[0]
+  return _proc(img)
 
 
 def rewards(cnt=3, debug=True):
-  # TODO
-  y1 = 385
-  y2 = 415
-  img = pyautogui.screenshot(region=(BoxX1, y1, BoxX2, y2 - y1))
+  y1, y2 = 470, 515
+  width = ORI_WIDTH // (cnt+2)
+  crop_params = [(i * width, y1, (i+1) * width, y2) for i in range(1, cnt+1)]
 
-  x_len = img.size[0] // (cnt+2)
-  crop_params = [(i * x_len, 0, (i + 1) * x_len, img.size[1]) for i in range(1, cnt+1)]
+  imgs = _screenshot_from_browser(crop_params=crop_params)
 
-  return [_proc(img.crop(param),
-                ratio=1,
-                save_name="reward_{}".format(index) if debug else None)
-          for index, param in enumerate(crop_params)]
+  return [_proc(img, save_name="reward/{}".format(index) if debug else None)
+          for index, img in enumerate(imgs)]
 
 
-def pokemons_sidebar(debug=True):
-  # TODO
-  x1 = 790
-  y1 = 160
-  x_len = ScreenX2 - x1
-  y_len = 215 - 160
+def pokemons_sidebar(x1=1430, y1=50, debug=True):
+  last_y2 = 1050
+  height = 100
+  if y1 % 50 > 0:
+    y1 = y1 // 50 * 50
+  crop_params = [(x1, y, ORI_WIDTH, y+height) for y in range(y1, last_y2, height)]
+  imgs = _screenshot_from_browser(crop_params=crop_params)
 
-  img = pyautogui.screenshot(region=(x1, y1, ScreenX2 - x1, ScreenY2 - y1))
-
-  crop_params = [(0, i*y_len, x_len, (i+1)*y_len) for i in range(10)]
-
-  return [_proc(img.crop(param),
-                save_name="sidebar/{}".format(index) if debug else None)
-          for index, param in enumerate(crop_params)]
+  return [_proc(img, save_name="sidebar/{}".format(idx) if debug else None)
+          for idx, img in enumerate(imgs)]

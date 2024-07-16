@@ -139,8 +139,8 @@ def wave_no():
   return no
 
 
-def pokemons_sidebar():
-  res, t = ocr(screenshot.pokemons_sidebar(), det=True)
+def pokemons_sidebar(x1=1430, y1=50):
+  res, t = ocr(screenshot.pokemons_sidebar(x1, y1), det=False)
   names = [p[0][0].strip() for p in res if p and p[0][0].strip() != ""]
   logger.debug("pokemons sidebar: {} ({:.2f}s)".format(names, t))
   return names

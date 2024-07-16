@@ -57,7 +57,8 @@ __match_text_to_state = {
   " fainted!": POKEMON_FAINTED,  # Wild xxx fainted
 
   "Come back, ": CLEAR_STAT,  # Come back, xxx!
-  "Gym Leade ": TRAINER_BATTLE,
+  "Gym Lead": TRAINER_BATTLE,
+  "Breeder ": TRAINER_BATTLE,
   "would like to battle!": TRAINER_BATTLE,  # xxx / would like to battle!
   "You defeated": TRAINER_DEFEATED,  # You defeated / xxx
   "You received": WIN_ITEM,  # You received / xxx
