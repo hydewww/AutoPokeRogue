@@ -26,24 +26,25 @@ DAILY_DONE = "Daily Done"
 
 
 class Command:
-  def __init__(self, act, double=None, double_idx=None,
-               from_p=None, to_p=None, p_click_cnt=None,
+  def __init__(self, act, double=None, double_idx=None, item=None, ball=None, wave_no=None, times=None,
                move=None, side=None, old_move=None,
-               item=None, ball=None, wave_no=None,
-               times=None):
+               from_p=None, to_p=None, p_click_cnt=None, from_p_no=None, from_p_lv=None, from_p_hp=None):
     self.act = act
     self.double = double
     self.double_idx = double_idx
+    self.item = item
     self.ball = ball
-    self.from_p = from_p
-    self.to_p = to_p
-    self.p_click_cnt = p_click_cnt
+    self.wave_no = wave_no
+    self.times = times
     self.move = move
     self.old_move = old_move
     self.side = side
-    self.item = item
-    self.wave_no = wave_no
-    self.times = times
+    self.from_p = from_p
+    self.to_p = to_p
+    self.p_click_cnt = p_click_cnt
+    self.from_p_no = from_p_no
+    self.from_p_lv = from_p_lv
+    self.from_p_hp = from_p_hp
 
   def from_dict(self, dicts):
     for k, v in dicts.items():
@@ -233,6 +234,25 @@ def __rec_reward(cmd: str):
   return cmds
 
 
+def __rec_special_pokemon(pokemon: str):
+  if "#" not in pokemon and "lvl" not in pokemon and " HP" not in pokemon:
+    return pokemon, None, None, None
+
+  match = re.search(r"#(\d)", pokemon)
+  if match:
+    return pokemon[:match.start()].strip("() "), int(match.group(1)), None, None
+
+  match = re.search(r"lvl(\d+)", pokemon)
+  if match:
+    return pokemon[:match.start()].strip("() "), None, int(match.group(1)), None
+
+  match = re.search(r"(\d+) HP", pokemon)
+  if match:
+    return pokemon[:match.start()].strip("() "), None, None, int(match.group(1))
+
+  raise Exception("Unknown special pokemon: {}".format(pokemon))
+
+
 def recognize_cmd(cmd: str, double=None, double_idx=None):
   cmd = preproc(cmd)
   lcmd = cmd.lower()
@@ -332,10 +352,10 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
       return [Command(LEARN_MOVE, move=tmp2[1], old_move=tmp[1], to_p=pokemon)]
 
     new, old = tmp[0].strip(), tmp[1].strip()
-    if const.POKEMONS_PATTERN.search(old):
-      if "(" in old:
-        raise Exception("unsure replace command: {}".format(cmd))
-      return [Command(REPLACE_POKEMON, from_p=old, to_p=new)]
+    match = const.POKEMONS_PATTERN.search(old)
+    if match:
+      pokemon, no, lv, hp = __rec_special_pokemon(old)
+      return [Command(REPLACE_POKEMON, to_p=new, from_p=pokemon, from_p_no=no, from_p_lv=lv, from_p_hp=hp)]
 
     match = const.POKEMONS_PATTERN.search(new)
     if match:
@@ -372,13 +392,11 @@ def cmd_gen(fname):
   lines = ori.readlines()
   ori.close()
 
-  gen = open(_gen_fname, 'w', encoding='utf-8')
-  gens = []
+  gen_lines = []
   for idx, line in enumerate(lines):
     line = line.strip("-").strip()
     if line == "" or line.startswith("Daily Run Guide"):
-      gens.append("\n")
-      gen.write("\n")
+      gen_lines.append("\n")
       continue
 
     cmd, times = __rec_times(line)
@@ -386,17 +404,15 @@ def cmd_gen(fname):
       cmds = recognize_cmd(cmd)
     except Exception as e:
       logger.warning("❌ {}, line={}".format(e, idx+1))
-      gens.append("{}\n".format(e))
-      gen.write("{}\n".format(e))
+      gen_lines.append("{}\n".format(e))
       continue
     if times > 1:
       cmds = cmds * times
-    gen.write("{}\n".format(json.dumps(cmds, default=lambda x: x.my_dict(), ensure_ascii=False)))
-    gens.append("{}\n".format(json.dumps(cmds, default=lambda x: x.my_dict(), ensure_ascii=False)))
-  gen.close()
-  gen = open(_gen_fname, 'w', encoding='utf-8')
-  gen.writelines(gens)
-  gen.close()
+    gen_lines.append("{}\n".format(json.dumps(cmds, default=lambda x: x.my_dict(), ensure_ascii=False)))
+
+  f = open(_gen_fname, 'w', encoding='utf-8')
+  f.writelines(gen_lines)
+  f.close()
 
 
 def cmd_generator(fname):

@@ -210,9 +210,19 @@ def test_switch_move():
   assert c[1] == command.Command(command.SWITCH_POKEMON, to_p="Malamar")
 
 
-def test_release_pokemon():
-  # FIXME
-  def test_special_pokemon():
-    c = "Bold Mint Foongus lvl22"
-    c = "lower HP Eldegoss"
-    c = "Vulpix #2 (w/ full HP)"
+def test_replace1():
+  c = command.recognize_cmd("Kricketune > Vulpix (10 HP)")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.REPLACE_POKEMON, from_p="Vulpix", from_p_hp=10, to_p="Kricketune")
+
+
+def test_replace2():
+  c = command.recognize_cmd("Kricketune > Vulpix #2 (w/ full HP)")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.REPLACE_POKEMON, from_p="Vulpix", from_p_no=2, to_p="Kricketune")
+
+
+def test_replace3():
+  c = command.recognize_cmd("Kricketune > Vulpix (lvl21)")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.REPLACE_POKEMON, from_p="Vulpix", from_p_lv=21, to_p="Kricketune")
