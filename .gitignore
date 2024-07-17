@@ -7,3 +7,4 @@ daily
 chromedriver
 locate/*
 daily.gen
+chrome_sess
