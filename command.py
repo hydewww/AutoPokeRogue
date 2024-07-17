@@ -1,8 +1,9 @@
+import json
+import re
+
 import text
 from logger import logger
 import const
-
-import re
 
 THROW_BALL = "ThrowBall"
 SWITCH_POKEMON = "SwitchPokemon"
@@ -43,17 +44,24 @@ class Command:
     self.item = item
     self.wave_no = wave_no
     self.times = times
-    self.line_no = None
 
-  def __str__(self):
+  def from_dict(self, dicts):
+    for k, v in dicts.items():
+      self.__dict__[k] = v
+    return self
+
+  def my_dict(self):
     attrs = {}
     for k, v in self.__dict__.items():
       if v is not None:
         attrs[k] = v
-    return str(attrs)
+    return attrs
+
+  def __str__(self):
+    return str(self.my_dict())
 
   def __repr__(self):
-    return self.__str__()
+    return str(self.my_dict())
 
   def __eq__(self, other):
     sd, od = self.__dict__, other.__dict__
@@ -150,8 +158,30 @@ def __rec_reward(cmd: str):
       cmds.append(Command(REROLL, times=cnt))
 
   reward = match.group("reward").strip()
-  if "Berry Pouch" in cmd:  # special case
+  if "Berry Pouch" in reward:  # special case
     cmds.append(Command(REWARD, item=reward))
+    return cmds
+
+  if "Memory Mushroom" in reward:  # TODO
+    cmds.append(Command(REWARD, item="Memory Mushroom"))
+    idx = reward.index("Memory Mushroom") + len("Memory Mushroom")
+    tmp = reward[idx:].strip()
+    if "|" in tmp and ">" in tmp:
+      try:
+        cmds2 = recognize_cmd(tmp)
+        if cmds2 and len(cmds2) == 1 and cmds2[0].act == LEARN_MOVE:
+          cmds.extend(cmds2)
+      except Exception as e:
+        raise Exception("Invalid Memory Mushroom Command: {}, err: ".format(cmd, e))
+    return cmds
+
+  if "TM" in reward:
+    match = const.POKEMONS_PATTERN.search(reward)
+    if not match:
+      raise Exception("Invalid TM Command: {}".format(cmd))
+    reward = reward[:match.start()].strip()
+    pokemon = match.group()
+    cmds.append(Command(REWARD, item=reward, to_p=pokemon, p_click_cnt=2))
     return cmds
 
   for key in const.ITEM_2CLICK + const.ITEM_1CLICK_WITH_MOVE:
@@ -212,7 +242,7 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
       wave_no = int(cmd.split(" ")[1])
       return [Command(NEW_WAVE, wave_no=wave_no)]
     except ValueError:
-      print("not new wave: {}".format(cmd))
+      logger.debug("not new wave: {}".format(cmd))
 
   if lcmd == "save and quit":
     return [Command(SAVE_AND_QUIT)]
@@ -252,6 +282,15 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
   if " | " in lcmd and " skip " in lcmd:
     tmp = cmd.split(" | ")[1]
     return [Command(SKIP_MOVE, move=tmp[len("skip "):])]
+
+  if " > " in cmd:
+    tmp = cmd.split(" > ")
+    for move in const.SWITCH_MOVES:
+      if move in tmp[0]:
+        return [
+          Command(FIGHT, move=move),
+          Command(SWITCH_POKEMON, to_p=tmp[1].strip())
+        ]
 
   # double battle, split cmds
   if " & " in cmd:
@@ -294,6 +333,8 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
 
     new, old = tmp[0].strip(), tmp[1].strip()
     if const.POKEMONS_PATTERN.search(old):
+      if "(" in old:
+        raise Exception("unsure replace command: {}".format(cmd))
       return [Command(REPLACE_POKEMON, from_p=old, to_p=new)]
 
     match = const.POKEMONS_PATTERN.search(new)
@@ -323,45 +364,71 @@ def __rec_times(cmd: str):
   return match.group(2), int(match.group(3))
 
 
+_gen_fname = 'daily.gen'
+
+
+def cmd_gen(fname):
+  ori = open(fname, 'r', encoding='utf-8')
+  lines = ori.readlines()
+  ori.close()
+
+  gen = open(_gen_fname, 'w', encoding='utf-8')
+  gens = []
+  for idx, line in enumerate(lines):
+    line = line.strip("-").strip()
+    if line == "" or line.startswith("Daily Run Guide"):
+      gens.append("\n")
+      gen.write("\n")
+      continue
+
+    cmd, times = __rec_times(line)
+    try:
+      cmds = recognize_cmd(cmd)
+    except Exception as e:
+      logger.warning("❌ {}, line={}".format(e, idx+1))
+      gens.append("{}\n".format(e))
+      gen.write("{}\n".format(e))
+      continue
+    if times > 1:
+      cmds = cmds * times
+    gen.write("{}\n".format(json.dumps(cmds, default=lambda x: x.my_dict(), ensure_ascii=False)))
+    gens.append("{}\n".format(json.dumps(cmds, default=lambda x: x.my_dict(), ensure_ascii=False)))
+  gen.close()
+  gen = open(_gen_fname, 'w', encoding='utf-8')
+  gen.writelines(gens)
+  gen.close()
+
+
 def cmd_generator(fname):
-  all_cmds = []
-  with open(fname, 'r') as file:
+  cmd_gen(fname)
+  with open(_gen_fname, 'r') as file:
     wave_cmds = []
-    line_no = 0
     for line in file:
-      line_no += 1
-      line = line.strip("-").strip()
-      if line == "" or line.startswith("Daily Run Guide"):
+      line = line.strip()
+      if line == "":
         continue
 
-      cmd, times = __rec_times(line)
       try:
-        cmds = recognize_cmd(cmd)
-        cmds[0].line_no = line_no
+        cmds = json.loads(line)
+        cmds = [Command(None).from_dict(cmd) for cmd in cmds]
       except Exception as e:
-          logger.warn("❌ CMD Error: {}, line={}".format(e, line_no))
-          continue
-      if times > 1:
-        cmds = cmds * times
-        # logger.debug("💬CMD {} x {} times".format(cmds[0], times))
-      if cmds[0].act == NEW_WAVE:
-        all_cmds.append(wave_cmds)
-        wave_cmds = cmds
-      else:
+        logger.warning("❌ {} line: {}".format(e, line))
+        exit()
+      if cmds[0].act not in [NEW_WAVE, DAILY_DONE]:
         wave_cmds.extend(cmds)
-    all_cmds.append(wave_cmds)  # last wave
-  all_cmds = all_cmds[1:]
-
-  for cmds in all_cmds:
-    double = False
-    for cmd in cmds:
-      if cmd.double:
-        double = True
-        break
-    if double:
-      for cmd in cmds:
-        cmd.double = double
-
-  for cmds in all_cmds:
-    yield cmds
-
+        continue
+      elif len(wave_cmds) == 0:
+        wave_cmds = cmds
+        continue
+      else:
+        double = False
+        for cmd in wave_cmds:
+          if cmd.double:
+            double = True
+            break
+        if double:
+          for cmd in wave_cmds:
+            cmd.double = double
+        yield wave_cmds
+        wave_cmds = cmds
+    yield wave_cmds

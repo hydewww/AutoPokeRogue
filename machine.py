@@ -77,9 +77,10 @@ def pre_switch_pokemon(sta: str, cmd: command.Command, texts: list[str]):
 
   # double: 'Will you switch', 'xxx?'
   if cmd.from_p is not None:
-    _, score, match = text.find_in_ocr_texts(cmd.from_p, ocr.chatbox(line=2))
-    if score >= 0.5:  # TODO
-      logger.info("🕹ACT [{}] not match {}[{:.3f}], cancel pre switch".format(match, cmd.from_p, score))
+    cur_p = ocr.chatbox(line=2)[0].strip('?')
+    score = text.compare(cmd.from_p, cur_p)
+    if score > 0.5:  # TODO
+      logger.info("🕹ACT [{}] not match {}[{:.3f}], cancel pre switch".format(cur_p, cmd.from_p, score))
       keyboard.cancel()
       return False
   logger.info("🕹ACT pre switch {}=>{}".format(cmd.from_p, cmd.to_p))
@@ -304,8 +305,11 @@ def main():
   browser.init(os.getenv('pokerogue_cookie'))
 
   try:
+    sta, texts = state.recognize_state()
+    reload_game(sta, None, texts, init=True)
+
     for cmds in generator:
-      if cmds[0].wave_no < begin_wave:
+      if cmds[0].wave_no and cmds[0].wave_no < begin_wave:
         continue
 
       for cmd in cmds:
@@ -318,29 +322,4 @@ def main():
     logger.info("max score: {}".format(action.max_ocr_score))
 
 
-def replay():
-  global cmd_wave, begin_wave, game_beginning
-  cmd_wave = -1
-  begin_wave = -1
-  game_beginning = False
-
-  # Start Page
-  keyboard.down()
-  keyboard.down()
-  keyboard.down()
-  keyboard.down()
-  keyboard.up()
-  keyboard.confirm()
-
-  # Save Page
-  slot = 3  # TODO
-  for i in range(slot - 1):
-    keyboard.down()
-  keyboard.confirm(wait=keyboard.WaitNewCombat)
-
-
 main()
-# while True:
-#   main()
-#   # All Done
-#   replay()

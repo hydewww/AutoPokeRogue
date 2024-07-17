@@ -2,6 +2,7 @@ import Levenshtein
 import re
 import numpy as np
 
+import const
 from logger import logger
 
 
@@ -16,6 +17,7 @@ _replace_texts = [
   [" i", "i"],
   ["U", "V"],
   ["5x ", ""],
+  ["!", "l"],
 ]
 
 
@@ -72,6 +74,9 @@ def find_closest_pattern(patterns, texts, debug=False):
 
 
 def check_pokemons_correctness(pokemons):
+  if len(pokemons[0]) < const.POKEMON_NAME_MIN_LEN:
+    return False
+
   reg = re.compile(r"(\d){2,}")
   for p in pokemons:
     if reg.search(p) is not None:

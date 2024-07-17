@@ -41,7 +41,7 @@ __match_text_to_state = {
   "Transfer": SHOP,
   "Lock Rarities": SHOP_WITH_LOCK,
 
-  "wants to learn the": LEARN_MOVE,  # xxx wants to learn the / move xxx.
+  " to learn the": LEARN_MOVE,  # xxx wants to learn the / move xxx.
   "You picked up ": GAIN_MONEY,  # You picked up Pxx!
   " is evolving! ": EVOLVING,  # What? / xxx is evolving!
   "Congratulations!": EVOLVED,  # Congratulations! / xxx evolved into yyy!
@@ -77,8 +77,11 @@ match_texts = [k for k in __match_text_to_state.keys()]
 state_min_score = 0.51  # TODO
 
 
-def recognize_state():
-  texts = ocr.bottom_screen()
+def recognize_state(debug_texts=None):
+  if debug_texts is None:
+    texts = ocr.bottom_screen()
+  else:
+    texts = debug_texts
   idx, score = text.find_closest_pattern(match_texts, texts, debug=False)
   state = __match_text_to_state[match_texts[idx]]
   if score >= state_min_score:

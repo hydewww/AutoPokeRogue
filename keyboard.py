@@ -12,7 +12,7 @@ WaitFight = 1.6
 WaitThrowBall = 1.8
 WaitNewCombat = 2.5
 WaitDialog = 0.8
-WaitReroll = 1
+WaitReroll = 1.5
 WaitShortAction = 0.2
 
 

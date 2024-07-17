@@ -41,10 +41,10 @@ def find_icon(img, icon_path, threshold=0.7, find_all=False, save_name=None):
                 if find_all=False, return 1 if matched else 0
   """
   icon = Image.open(icon_path)
-  icon = icon.resize((icon.size[0] // browser.RATIO, icon.size[1] // browser.RATIO))
+  icon = icon.resize((int(icon.size[0] / browser.RATIO), int(icon.size[1] / browser.RATIO)))
   icon = np.array(icon.convert("RGB"))
-  w, h = icon.shape[:2]
-  # logger.debug("icon shape: {}x{}, img shape: {}".format(w, h, img.shape[:2]))
+  h, w = icon.shape[:2]
+  logger.debug("icon shape: {}x{}, img shape: {}".format(w, h, img.shape[:2]))
 
   # Convert to grayscale (optional)
   gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -60,6 +60,7 @@ def find_icon(img, icon_path, threshold=0.7, find_all=False, save_name=None):
   result = cv2.matchTemplate(edges_img, edges_icon, cv2.TM_CCOEFF_NORMED)
   _, max_score, _, max_loc = cv2.minMaxLoc(result)
   x, y = max_loc
+  logger.debug("icon match: {}({:.3f})".format((x, y), max_score))
 
   if max_score < threshold:
     return []
@@ -84,7 +85,7 @@ def find_icon(img, icon_path, threshold=0.7, find_all=False, save_name=None):
     if not already_append:
       box = (x, y, x + w, y + h)
       boxes.append(box)
-      # logger.debug("icon match[{}]: {}({})".format(len(boxes), box, max_score))
+      logger.debug("icon match[{}]: {}({})".format(len(boxes), box, max_score))
 
   if save_name is not None:
     for box in boxes:
@@ -92,8 +93,8 @@ def find_icon(img, icon_path, threshold=0.7, find_all=False, save_name=None):
     Image.fromarray(img).save("./screenshot/{}.png".format(save_name))
 
   for i in range(len(boxes)):
-    boxes[i] = (boxes[i][0] * browser.RATIO, boxes[i][1] * browser.RATIO,
-                boxes[i][2] * browser.RATIO, boxes[i][3] * browser.RATIO)
+    boxes[i] = (int(boxes[i][0] * browser.RATIO), int(boxes[i][1] * browser.RATIO),
+                int(boxes[i][2] * browser.RATIO), int(boxes[i][3] * browser.RATIO))
   return boxes
 
 
@@ -110,7 +111,7 @@ def find_shiny():
 
 def find_arrow():
   _start = time.time()  # cal time
-  boxes = find_icon(screenshot.fullscreen(), "./icon/arrow.png", threshold=0.6, save_name="arrow")
+  boxes = find_icon(screenshot.fullscreen(), "./icon/arrow.png", threshold=0.45, save_name="arrow")
   if len(boxes) == 0:
     raise Exception("arrow not found")
   _end = time.time()  # cal time

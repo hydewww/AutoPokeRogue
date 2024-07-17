@@ -21,7 +21,7 @@ def _screenshot_from_browser(crop_params=None):
 
   for i in range(len(crop_params)):
     x1, y1, x2, y2 = crop_params[i]
-    crop_params[i] = (x1 // ratio, y1 // ratio, x2 // ratio, y2 // ratio)
+    crop_params[i] = (int(x1 / ratio), int(y1 / ratio), int(x2 / ratio), int(y2 / ratio))
   imgs = [img.crop(param) for param in crop_params]
   imgs[0].save('./screenshot/last.crop.png')  # debug
   return imgs
@@ -91,7 +91,7 @@ def fight_moves():
                  (move3_x1, move3_y1, move3_x1+move_width, move3_y1+move_height),
                  (move4_x1, move4_y1, move4_x1+move_width, move4_y1+move_height)]
   imgs = _screenshot_from_browser(crop_params=crop_params)
-  return [_proc(img, save_name=f'{idx}') for idx, img in enumerate(imgs)]
+  return [_proc(img) for idx, img in enumerate(imgs)]
 # action_moves()
 
 

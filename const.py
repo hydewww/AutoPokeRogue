@@ -13,7 +13,7 @@ ITEM_TYPE_BOOSTING = ["Silk Scarf", "Black Belt", "Sharp Beak", "Poison Barb", "
                       "Twisted Spoon", "Never", "Dragon Fang", "Black Glasses", "Fairy Feather"]
 ITEM_SPECIES_BOOSTING = ["Light Ball", "Thick Club", "Metal Powder", "Quick Powder"]
 ITEM_REST_HELD = [" Berry", "Reviver Seed", "Golden Punch", " Orb", "Wide Lens", "Baton",
-                  "Focus Band", "Grip Claw", "Quick Claw", "King", "Leftovers", "Form Change", "Shell Bell",
+                  "Focus Band", "Grip Claw", "Quick Claw", "King's Rock", "Leftovers", "Form Change", "Shell Bell",
                   "Soothe Bell", "Soul Dew", "Multi Lens", "Mini Black", "Lucky Egg", "Golden Egg"]
 
 ITEM_2CLICK = (ITEM_VITAMIN + ITEM_EVOLUTION + ITEM_TYPE_BOOSTING + ITEM_SPECIES_BOOSTING +
@@ -142,3 +142,6 @@ POKEMONS = (["Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Ch
              "Poltchageist", "Sinistcha", "Okidogi", "Munkidori", "Fezandipiti", "Ogerpon", "Archaludon", "Hydrapple",
              "Gouging Fire", "Raging Bolt", "Iron Boulder", "Iron Crown", "Terapagos", "Pecharunt"])
 POKEMONS_PATTERN = re.compile(f"({"|".join(POKEMONS)})", re.I)
+
+
+SWITCH_MOVES = ["U-Turn", "Volt Switch", "Flip Turn", "Teleport", "Parting Shot", "Baton Pass"]

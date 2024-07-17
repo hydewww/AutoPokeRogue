@@ -1,5 +1,4 @@
 import command
-import re
 
 
 def test_switch_single1():
@@ -175,10 +174,40 @@ def test_reward7():
                                  to_p="Garganacl", p_click_cnt=1, move="Recover")
 
 
+def test_reward8():  #
+  c = command.recognize_cmd("Reward: King's Rock Shedinja")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.REWARD, item="King's Rock",
+                                 to_p="Shedinja", p_click_cnt=2)
+
+
+def test_reward9():  #
+  c = command.recognize_cmd("Reward: Reroll > TM Poltergeist Shedinja")
+  assert len(c) == 2
+  assert c[0] == command.Command(command.REROLL, times=1)
+  assert c[1] == command.Command(command.REWARD, item="TM Poltergeist",
+                                 to_p="Shedinja", p_click_cnt=2)
+
+
+def test_reward10():
+  c = command.recognize_cmd("Reward: Memory Mushroom Mightyena | Crunch > Leer")
+  assert len(c) == 2
+  assert c[0] == command.Command(command.REWARD, item="Memory Mushroom")
+  assert c[1] == command.Command(command.LEARN_MOVE, to_p="Mightyena",
+                                 old_move="Leer", move="Crunch")
+
+
 def test_evolve():
   c = command.recognize_cmd("Release Carracosta, Lapras, Ninjask")
   assert len(c) == 1
   assert c[0] == command.Command(command.RELEASE_POKEMON, to_p=["Carracosta", "Lapras", "Ninjask"])
+
+
+def test_switch_move():
+  c = command.recognize_cmd("Volt Switch to Malamar")
+  assert len(c) == 2
+  assert c[0] == command.Command(command.FIGHT, move="Volt Switch")
+  assert c[1] == command.Command(command.SWITCH_POKEMON, to_p="Malamar")
 
 
 def test_release_pokemon():

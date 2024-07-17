@@ -10,3 +10,4 @@ https://googlechromelabs.github.io/chrome-for-testing/
 - [ ] reuse selenium session after Exception
 - [ ] config file
 - [ ] read guide online
+- [ ] auto downsize browser

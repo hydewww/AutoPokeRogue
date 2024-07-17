@@ -1,4 +1,4 @@
-setuptools==70.0.0
+setuptools==70.3.0
 numpy==1.26.4
 Pillow==10.3.0
 opencv-python-headless==4.10.0.84
@@ -6,7 +6,8 @@ pygetwindow==0.0.9
 PyAutoGUI==0.9.54
 pyobjc==10.3.1
 pyobjc-core==10.3.1
-paddleocr==2.7.3
+paddleocr==2.8.0
+paddlepaddle==3.0.0b1
 Levenshtein==0.25.1
 pytest==8.2.2
 selenium==4.22.0

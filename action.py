@@ -160,7 +160,7 @@ def choose_move(move):
   global max_ocr_score
   # Move Info Page
   # recognize
-  min_score = 0.25
+  min_score = 0.5
   moves = ocr.learn_moves()
   index, score, match = text.find_in_ocr_texts(move, moves, min_score=min_score)
   max_ocr_score["learn_move"] = max(max_ocr_score["learn_move"], score)
@@ -263,6 +263,13 @@ def save_and_quit():
 # transfer item / memory move
 def choose_from_sidebar(name, min_score=1.0):
   global max_ocr_score
+
+  if name.strip().lower() == "all":
+    keyboard.up()
+    keyboard.up()
+    keyboard.confirm()
+    return
+
   _, y1, x2, _ = cv.find_arrow()
   # recognize from bottom by default
   keyboard.up()
