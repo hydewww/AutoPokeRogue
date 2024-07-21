@@ -12,6 +12,7 @@ from psutil import ZombieProcess
 from selenium.common.exceptions import NoSuchWindowException, InvalidSessionIdException, WebDriverException
 
 from logger import logger
+from config import conf
 
 _browser: WebDriver
 
@@ -81,7 +82,7 @@ def save_sess():
     json.dump({'url': _browser.command_executor._url, 'sess_id': _browser.session_id}, f)
 
 
-def init(session_id: str, chromedriver_path='./chromedriver'):
+def init():
   global _browser
 
   if get_existing_sess():
@@ -94,7 +95,7 @@ def init(session_id: str, chromedriver_path='./chromedriver'):
   options.add_argument("--app=https://pokerogue.net/")
   options.add_argument(f'--window-size={_browser_width},{_browser_height}')
   # options.add_argument('--headless')
-  _browser = webdriver.Chrome(service=ChromeService(chromedriver_path), options=options)
+  _browser = webdriver.Chrome(service=ChromeService(conf.chrome_driver_path), options=options)
 
   kvs = {
     "GAME_SPEED": 7,
@@ -110,7 +111,7 @@ def init(session_id: str, chromedriver_path='./chromedriver'):
   }
   _browser.execute_script(f"localStorage.setItem('settings', JSON.stringify({str(kvs)}));")
   _browser.add_cookie({'name': 'pokerogue_sessionId',
-                       'value': session_id,
+                       'value': conf.cookie,
                        'domain': 'pokerogue.net',
                        'path': '/',
                        'secure': True,
@@ -125,7 +126,7 @@ def close():
 
 
 def screenshot_as_base64():
-  wait = WebDriverWait(_browser, 30)
+  wait = WebDriverWait(_browser, 5)
   canvas = wait.until(EC.presence_of_element_located((By.TAG_NAME, "canvas")))
 
   while canvas.size != {'width': _browser_width, 'height': _canvas_height}:

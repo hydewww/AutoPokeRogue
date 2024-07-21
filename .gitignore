@@ -3,9 +3,9 @@ screenshot/*
 .DS_Store
 .idea/*
 __pycache__/*
-daily
 chromedriver
 locate/*
+daily.txt
 daily.gen
 chrome_sess
 tmp.py

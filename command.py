@@ -391,8 +391,8 @@ def __rec_times(cmd: str):
 _gen_fname = 'daily.gen'
 
 
-def cmd_gen(fname):
-  ori = open(fname, 'r', encoding='utf-8')
+def cmd_gen():
+  ori = open('daily.txt', 'r', encoding='utf-8')
   lines = ori.readlines()
   ori.close()
 
@@ -419,8 +419,8 @@ def cmd_gen(fname):
   f.close()
 
 
-def cmd_generator(fname):
-  cmd_gen(fname)
+def cmd_generator():
+  cmd_gen()
   with open(_gen_fname, 'r') as file:
     wave_cmds = []
     for line in file:

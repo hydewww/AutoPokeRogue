@@ -1,5 +1,4 @@
 import time
-import os
 
 import action
 import command
@@ -301,8 +300,8 @@ def proc_command(cmd: command.Command):
 
 
 def main():
-  generator = command.cmd_generator("daily")
-  browser.init(os.getenv('pokerogue_cookie'))
+  generator = command.cmd_generator()
+  browser.init()
 
   try:
     sta, texts = state.recognize_state()
