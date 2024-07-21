@@ -15,11 +15,15 @@ def test_switch_single2():
                                  double_idx=None, from_p=None, to_p="b")
 
 
-def test_switch_single3():
-  c = command.recognize_cmd("Send in b")
+def test_switch_send_in():
+  c = command.recognize_cmd("- Send In Vulpix")
   assert len(c) == 1
   assert c[0] == command.Command(command.SWITCH_POKEMON,
-                                 double_idx=None, from_p=None, to_p="b")
+                                 double_idx=None, from_p=None, to_p="Vulpix")
+  c = command.recognize_cmd("- Send in Vulpix")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.SWITCH_POKEMON,
+                                 double_idx=None, from_p=None, to_p="Vulpix")
 
 
 def test_switch_double1():
@@ -41,15 +45,6 @@ def test_switch_double2():
 
 
 def test_switch_double3():
-  c = command.recognize_cmd("Pre-Switch to b & d")
-  assert len(c) == 2
-  assert c[0] == command.Command(command.PRE_SWITCH_POKEMON,
-                                 double_idx=1, from_p=None, to_p="b")
-  assert c[1] == command.Command(command.PRE_SWITCH_POKEMON,
-                                 double_idx=2, from_p=None, to_p="d")
-
-
-def test_switch_double4():
   c = command.recognize_cmd("Switch to Weavile & Detect")
   assert len(c) == 2
   assert c[0] == command.Command(command.SWITCH_POKEMON,
@@ -58,11 +53,13 @@ def test_switch_double4():
   "Switch to Weavile & Detect"
 
 
-def test_switch_special():
-  c = command.recognize_cmd("Switch, DO NOT PRESWITCH Beedrill")
-  assert len(c) == 1
-  assert c[0] == command.Command(command.SWITCH_POKEMON,
-                                 double_idx=None, from_p=None, to_p="Beedrill")
+def test_pre_switch_double():
+  c = command.recognize_cmd("Pre-Switch to b & d")
+  assert len(c) == 2
+  assert c[0] == command.Command(command.PRE_SWITCH_POKEMON,
+                                 double_idx=1, from_p=None, to_p="b")
+  assert c[1] == command.Command(command.PRE_SWITCH_POKEMON,
+                                 double_idx=2, from_p=None, to_p="d")
 
 
 def test_transfer1():
@@ -124,49 +121,56 @@ def test_learn_move2():
                                  old_move="Razor Leaf", move="Leaf Blade")
 
 
-def test_reward1():
+def test_reward_reroll():
   c = command.recognize_cmd("Reward: Reroll x2 > Dire Hit")
   assert len(c) == 2
   assert c[0] == command.Command(command.REROLL, times=2)
   assert c[1] == command.Command(command.REWARD, item="Dire Hit")
 
 
-def test_reward2():
+def test_reward_pokemon1():
   c = command.recognize_cmd("Reward: Super Potion Palossand")
   assert len(c) == 1
   assert c[0] == command.Command(command.REWARD,
                                  item="Super Potion", to_p="Palossand", p_click_cnt=2)
 
 
-def test_reward3():
-  c = command.recognize_cmd("Reward: PP Up Trevenant (Horn Leech)")
-  assert len(c) == 1
-  assert c[0] == command.Command(command.REWARD,
-                                 item="PP Up", to_p="Trevenant", move="Horn Leech", p_click_cnt=1)
-
-
-def test_reward4():
+def test_reward_pokemon2():
   c = command.recognize_cmd("Reward: Icicle Spear > Weavile")
   assert len(c) == 1
   assert c[0] == command.Command(command.REWARD,
                                  item="Icicle Spear", to_p="Weavile", p_click_cnt=2)
 
 
-def test_reward5():
+def test_reward_pokemon3():  #
+  c = command.recognize_cmd("Reward: King's Rock Shedinja")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.REWARD, item="King's Rock",
+                                 to_p="Shedinja", p_click_cnt=2)
+
+
+def test_reward_move1():
+  c = command.recognize_cmd("Reward: PP Up Trevenant (Horn Leech)")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.REWARD,
+                                 item="PP Up", to_p="Trevenant", move="Horn Leech", p_click_cnt=1)
+
+
+def test_reward_move2():
   c = command.recognize_cmd("Reward: Max Ether Parasect > Giga Drain")
   assert len(c) == 1
   assert c[0] == command.Command(command.REWARD,
                                  item="Max Ether", to_p="Parasect", move="Giga Drain", p_click_cnt=1)
 
 
-def test_reward6():
+def test_reward_move3():
   c = command.recognize_cmd("Reward: Acid Spray (Glimmora)")
   assert len(c) == 1
   assert c[0] == command.Command(command.REWARD,
                                  item="Acid Spray", to_p="Glimmora", p_click_cnt=2)
 
 
-def test_reward7():
+def test_reward_move4():
   c = command.recognize_cmd("Reward: Reroll > PP Max Garganacl Recover")
   assert len(c) == 2
   assert c[0] == command.Command(command.REROLL, times=1)
@@ -174,14 +178,7 @@ def test_reward7():
                                  to_p="Garganacl", p_click_cnt=1, move="Recover")
 
 
-def test_reward8():  #
-  c = command.recognize_cmd("Reward: King's Rock Shedinja")
-  assert len(c) == 1
-  assert c[0] == command.Command(command.REWARD, item="King's Rock",
-                                 to_p="Shedinja", p_click_cnt=2)
-
-
-def test_reward9():  #
+def test_reward_tm1():  #
   c = command.recognize_cmd("Reward: Reroll > TM Poltergeist Shedinja")
   assert len(c) == 2
   assert c[0] == command.Command(command.REROLL, times=1)
@@ -189,7 +186,15 @@ def test_reward9():  #
                                  to_p="Shedinja", p_click_cnt=2)
 
 
-def test_reward10():
+def test_reward_tm2():
+  c = command.recognize_cmd("Reward: TM Toxic Clauncher | Toxic > Flail")
+  assert len(c) == 2
+  assert c[0] == command.Command(command.REWARD, item="TM Toxic", to_p="Clauncher", p_click_cnt=2)
+  assert c[1] == command.Command(command.LEARN_MOVE, to_p="Clauncher",
+                                 old_move="Flail", move="Toxic")
+
+
+def test_reward_memory_mushroom1():
   c = command.recognize_cmd("Reward: Memory Mushroom Mightyena | Crunch > Leer")
   assert len(c) == 2
   assert c[0] == command.Command(command.REWARD, item="Memory Mushroom")
@@ -197,7 +202,15 @@ def test_reward10():
                                  old_move="Leer", move="Crunch")
 
 
-def test_evolve():
+def test_reward_memory_mushroom2():
+  c = command.recognize_cmd("Reward: Memory Mushroom Butterfree | Sleep Powder > Quiver Dance")
+  assert len(c) == 2
+  assert c[0] == command.Command(command.REWARD, item="Memory Mushroom")
+  assert c[1] == command.Command(command.LEARN_MOVE, to_p="Butterfree",
+                                 old_move="Quiver Dance", move="Sleep Powder")
+
+
+def test_release():
   c = command.recognize_cmd("Release Carracosta, Lapras, Ninjask")
   assert len(c) == 1
   assert c[0] == command.Command(command.RELEASE_POKEMON, to_p=["Carracosta", "Lapras", "Ninjask"])
@@ -213,16 +226,25 @@ def test_switch_move():
 def test_replace1():
   c = command.recognize_cmd("Kricketune > Vulpix (10 HP)")
   assert len(c) == 1
-  assert c[0] == command.Command(command.REPLACE_POKEMON, from_p="Vulpix", from_p_hp=10, to_p="Kricketune")
+  assert c[0] == command.Command(command.REPLACE_POKEMON, to_p="Kricketune",
+                                 from_p=command.Pokemon("Vulpix", hp=10))
 
 
 def test_replace2():
   c = command.recognize_cmd("Kricketune > Vulpix #2 (w/ full HP)")
   assert len(c) == 1
-  assert c[0] == command.Command(command.REPLACE_POKEMON, from_p="Vulpix", from_p_no=2, to_p="Kricketune")
+  assert c[0] == command.Command(command.REPLACE_POKEMON, to_p="Kricketune",
+                                 from_p=command.Pokemon("Vulpix", no=2))
 
 
 def test_replace3():
   c = command.recognize_cmd("Kricketune > Vulpix (lvl21)")
   assert len(c) == 1
-  assert c[0] == command.Command(command.REPLACE_POKEMON, from_p="Vulpix", from_p_lv=21, to_p="Kricketune")
+  assert c[0] == command.Command(command.REPLACE_POKEMON, to_p="Kricketune",
+                                 from_p=command.Pokemon("Vulpix", lv=21))
+
+def test_replace4():
+  c = command.recognize_cmd("Kricketune > Vulpix (male)")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.REPLACE_POKEMON, to_p="Kricketune",
+                                 from_p=command.Pokemon("Vulpix", gender=1))

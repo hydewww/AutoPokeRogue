@@ -103,7 +103,7 @@ def rewards(cnt=3):
   for idx, reward in enumerate(res):
     if reward is None:
       raise Exception("reward null, idx: {}".format(idx))
-    name = " ".join(t[0] for t in reward)
+    name = " ".join(t[0].strip("-. ") for t in reward)
     names.append(name)
   logger.debug("rewards: {} ({:.2f}s)".format(names, t))
   names = [name for name in names if name != ""]

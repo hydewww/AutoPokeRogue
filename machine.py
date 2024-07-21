@@ -318,7 +318,7 @@ def main():
         while proc_command(cmd) is False:
           pass
   finally:
-    browser.close()
+    # browser.close()
     logger.info("max score: {}".format(action.max_ocr_score))
 
 

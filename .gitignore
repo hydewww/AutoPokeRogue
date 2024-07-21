@@ -8,3 +8,4 @@ chromedriver
 locate/*
 daily.gen
 chrome_sess
+tmp.py

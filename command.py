@@ -80,6 +80,7 @@ def preproc(cmd: str):
     cmd = cmd[len("- "):].strip()
   res = (cmd.
          replace("Send in ", "Switch > ").
+         replace("Send In ", "Switch > ").
          replace("Pick ", "Switch > ").
          replace("Swap ", "Switch ").
          replace(" for ", " > ").  # Pre-switch a for b
@@ -94,7 +95,7 @@ def preproc(cmd: str):
 
 
 def __rec_switch(cmd: str):
-  match = re.search(r"witch( >)?(?P<from>( [\w\-']+)+)?( >)?(?P<to>( [\w\-']+)+)", cmd)
+  match = re.search(r"Switch( >)?(?P<from>( [\w\-']+)+)?( >)?(?P<to>( [\w\-']+)+)", cmd, re.I)
   if match is None:
     raise Exception("Not match switch [{}]".format(cmd))
   f = match.group("from")
@@ -180,9 +181,17 @@ def __rec_reward(cmd: str):
     match = const.POKEMONS_PATTERN.search(reward)
     if not match:
       raise Exception("Invalid TM Command: {}".format(cmd))
-    reward = reward[:match.start()].strip()
+    item = reward[:match.start()].strip()
     pokemon = match.group()
-    cmds.append(Command(REWARD, item=reward, to_p=pokemon, p_click_cnt=2))
+    cmds.append(Command(REWARD, item=item, to_p=pokemon, p_click_cnt=2))
+    tmp = reward[match.start():].strip()
+    if "|" in tmp and ">" in tmp:
+      try:
+        cmds2 = recognize_cmd(tmp)
+        if cmds2 and len(cmds2) == 1 and cmds2[0].act == LEARN_MOVE:
+          cmds.extend(cmds2)
+      except Exception as e:
+        raise Exception("Invalid TM Command: {}, err: ".format(cmd, e))
     return cmds
 
   for key in const.ITEM_2CLICK + const.ITEM_1CLICK_WITH_MOVE:
@@ -336,11 +345,6 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
     if double_idx is None and from_pokemon is not None:
       double_idx = -1  # TODO
     return [Command(PRE_SWITCH_POKEMON, double=double, double_idx=double_idx,
-                    from_p=from_pokemon, to_p=to_pokemon)]
-  elif lcmd.startswith("switch, do not pre"):  # Switch, DO NOT PRESWITCH Beedrill
-    cmd = "Switch " + cmd[lcmd.index("pre"):].split(" ", 1)[1]
-    from_pokemon, to_pokemon = __rec_switch(cmd)
-    return [Command(SWITCH_POKEMON, double=double, double_idx=double_idx,
                     from_p=from_pokemon, to_p=to_pokemon)]
 
   # TODO: more solid

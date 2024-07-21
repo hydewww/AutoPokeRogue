@@ -10,6 +10,7 @@ _replace_texts = [
   ["1", "l"],
   ["0", "O"],
   ["é", "e"],
+  ["X", "H"],
   ["M", "H"],
   ["w", "H"],
   ["m", "n"],
@@ -37,8 +38,8 @@ def compare(origin: str, ocr: str):
     ocr2 = ocr[-tmp:]
     ocr = ocr[:tmp]
 
-  dis = min(Levenshtein.distance(origin, ocr, weights=(1, 1, 2)),
-            Levenshtein.distance(origin, ocr2, weights=(1, 1, 2)))
+  dis = min(Levenshtein.distance(origin, ocr, weights=(1, 1, 1)),
+            Levenshtein.distance(origin, ocr2, weights=(1, 1, 1)))
   score = dis / len(origin)
   return score
 
@@ -86,8 +87,8 @@ def check_pokemons_correctness(pokemons):
 
 
 def split_pokemon_name_and_no(name):
-  match = re.search(r"([\w ]+) #(\d)", name)
+  match = re.search(r"#(\d)", name)
   if match:
-    return match.group(1), int(match.group(2))
+    return name[:match.start()].strip(), int(match.group(1))
   return name, 1
 # print(split_pokemon_name_and_no("Vulpix #2 (w/ full HP)"))

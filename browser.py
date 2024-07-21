@@ -18,7 +18,7 @@ _browser: WebDriver
 CANVAS_ORI_WIDTH = 1920
 CANVAS_ORI_HEIGHT = 1080
 TOP_BAR_HEIGHT = 30
-RATIO = 1  # 1 / 1.6 / 2
+RATIO = 2  # 1 / 1.6 / 2
 _browser_width = int(1920 / RATIO)
 _canvas_height = int(1080 / RATIO)
 _browser_height = _canvas_height + TOP_BAR_HEIGHT
