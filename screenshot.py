@@ -168,3 +168,10 @@ def pokemons_sidebar(x1=1430, y1=50, debug=True):
 
   return [_proc(img, save_name="sidebar/{}".format(idx) if debug else None)
           for idx, img in enumerate(imgs)]
+
+
+def egg_num():
+  x1, y1 = 150, 80
+  x2, y2 = 230, 148
+  img = _screenshot_from_browser(crop_params=[(x1, y1, x2, y2)])[0]
+  return _proc(img)

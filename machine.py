@@ -193,6 +193,25 @@ def skip_dialog(sta: str, cmd: command.Command, texts: list[str]):
   return False
 
 
+def hatch_egg(sta: str, cmd: command.Command, texts: list[str]):
+  logger.debug("🕹ACT hatch egg")
+  num = ocr.egg_num()
+  if num is None:
+    action.save_and_quit()  # FIXME
+    raise Exception("egg num None")
+
+  if num > 3:
+    keyboard.confirm_down()
+    while num > 3:
+      num2 = ocr.egg_num()
+      if num2 is not None:
+        num = num2
+      time.sleep(keyboard.WaitHatchEgg)
+    keyboard.confirm_up()
+
+  keyboard.confirm(keyboard.WaitDialog)
+  return False
+
 
 def choose_pokemon(sta: str, cmd: command.Command, texts: list[str]):
   # Memory Mushroom  # TODO
@@ -253,7 +272,7 @@ def get_state_func(sta):
                state.LEVEL_CAP_UP]:
     return skip_dialog
   elif sta in [state.EGG_HATCHED, state.MOVE_UNLOCKED, state.STARTER_ADDED]:
-    return skip_dialog
+    return hatch_egg
   elif sta in [state.EVOLVING, state.CLEAR_STAT, state.MOVE_EFFECT, state.WEATHER,
                state.TRAINER_REPLACE, state.LOADING]:
     return wait_dialog
@@ -288,7 +307,7 @@ def proc_command(cmd: command.Command):
   f = get_state_func(sta)
 
   # be sure to clear dialogs to finish the wave
-  if f in [skip_dialog, wait_dialog, start_page]:
+  if f in [skip_dialog, wait_dialog, start_page, hatch_egg]:
     return f(sta, cmd, texts)
 
   if cmd.act == command.NEW_WAVE:

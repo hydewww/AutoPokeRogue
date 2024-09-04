@@ -163,3 +163,14 @@ def pokemons_sidebar(x1=1430, y1=50):
   logger.debug("pokemons sidebar: {} ({:.2f}s)".format(names, t))
   return names
 # pokemons_sidebar()
+
+
+def egg_num():
+  res, t = ocr(screenshot.egg_num(), det=False)
+  logger.debug("egg_num: {} ({:.2f}s)".format(res, t))
+  if res[0] is None:
+    return None
+  num = res[0][0][0].strip()
+  if num == "":
+    return None
+  return int(res[0][0][0].strip())

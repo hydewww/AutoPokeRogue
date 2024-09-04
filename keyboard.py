@@ -14,6 +14,7 @@ WaitNewCombat = 2.5
 WaitDialog = 0.8
 WaitReroll = 1.5
 WaitShortAction = 0.2
+WaitHatchEgg = 2
 
 
 def up():
@@ -61,3 +62,11 @@ def cancel(wait=WaitAction):
 def menu(wait=WaitAction):
   pyautogui.press('m')
   time.sleep(wait)
+
+
+def confirm_down():
+  pyautogui.keyDown("z")
+
+
+def confirm_up():
+  pyautogui.keyUp("z")
