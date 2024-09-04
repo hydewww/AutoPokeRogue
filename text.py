@@ -57,6 +57,22 @@ def find_in_ocr_texts(text, texts, no=1, min_score=None, debug=False):
   return index, score, texts[index]
 
 
+def find_all_in_ocr_texts(text: str, texts: list[str], min_score=None, debug=False) -> list[tuple[int, float]]:
+  scores = [compare(text, t) for t in texts]
+  if debug:
+    logger.debug("compare [{}] to {} score: {}".format(text, texts, scores))
+
+  res = []
+  for idx in np.argsort(scores):
+    if min_score is None or scores[idx] <= min_score:
+      res.append((idx, scores[idx]))
+
+  if len(res) == 0:
+    raise Exception("Not Found [{}] in texts: {}, scores: {}, min: {}".format(text, texts, scores, min_score))
+
+  return res
+
+
 def find_closest_pattern(patterns, texts, debug=False):
   if len(texts) == 0 or len(patterns) == 0:
     return -1, 10
@@ -86,11 +102,3 @@ def check_pokemons_correctness(pokemons):
       return False
 
   return True
-
-
-def split_pokemon_name_and_no(name):
-  match = re.search(r"#(\d)", name)
-  if match:
-    return name[:match.start()].strip(), int(match.group(1))
-  return name, 1
-# print(split_pokemon_name_and_no("Vulpix #2 (w/ full HP)"))

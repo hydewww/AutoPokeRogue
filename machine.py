@@ -10,6 +10,7 @@ import keyboard
 from logger import logger
 import browser
 import cv
+from config import conf
 
 
 begin_wave = -1
@@ -82,7 +83,7 @@ def pre_switch_pokemon(sta: str, cmd: command.Command, texts: list[str]):
   # double: 'Will you switch', 'xxx?'
   if cmd.from_p is not None:
     cur_p = ocr.chatbox(line=2)[0].strip('?')
-    score = text.compare(cmd.from_p, cur_p)
+    score = text.compare(cmd.from_p.p, cur_p)
     if score > 0.5:  # TODO
       logger.info("🕹ACT [{}] not match {}[{:.3f}], cancel pre switch".format(cur_p, cmd.from_p, score))
       keyboard.cancel()
@@ -196,11 +197,7 @@ def skip_dialog(sta: str, cmd: command.Command, texts: list[str]):
 def hatch_egg(sta: str, cmd: command.Command, texts: list[str]):
   logger.debug("🕹ACT hatch egg")
   num = ocr.egg_num()
-  if num is None:
-    action.save_and_quit()  # FIXME
-    raise Exception("egg num None")
-
-  if num > 3:
+  if num is not None and num > 3:
     keyboard.confirm_down()
     while num > 3:
       num2 = ocr.egg_num()
@@ -326,7 +323,6 @@ def proc_command(cmd: command.Command):
 
 
 def init():
-  #command.cmd_gen()
   browser.init()
   sta, texts = state.recognize_state()
   if sta == state.COOKIE_BANNER:
@@ -352,10 +348,10 @@ def main():
           pass
   except Exception as e:
     logger.debug("{}".format(e))
-    time.sleep(30)
+    time.sleep(conf.WAIT_SECONDS_BEFORE_CRASH)
     raise e
   finally:
-    # browser.close()
+    browser.close()
     logger.debug("max score: {}".format(action.max_ocr_score))
     logger.debug("max state score: {}".format(state.cur_state_max_score))
 

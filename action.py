@@ -8,11 +8,11 @@ import const
 import cv
 
 max_ocr_score = {
-  "pokemon": 0,
-  "fight_move": 0,
-  "learn_move": 0,
-  "reward": 0,
-  "sidebar": 0,
+  "pokemon": 0.0,
+  "fight_move": 0.0,
+  "learn_move": 0.0,
+  "reward": 0.0,
+  "sidebar": 0.0,
 }  # debug
 
 
@@ -25,13 +25,30 @@ def choose_pokemon(pokemon, double=None, final_click=2):
 
   # recognize
   min_score = 0.8  # TODO
-  p_name, p_no = text.split_pokemon_name_and_no(pokemon)
-  index, score, match = text.find_in_ocr_texts(p_name,
-                                               ocr.pokemons(double=double),
-                                               no=p_no,
-                                               min_score=min_score)
+  pokemons_name = ocr.pokemons_name(double=double)
+  rank = text.find_all_in_ocr_texts(pokemon.p, pokemons_name, min_score=min_score)
+  index, score, match = rank[0][0], rank[0][1], pokemons_name[rank[0][0]]
+
+  if pokemon.hp:
+    flag = False
+    hps = ocr.pokemons_hp(double=double)
+    for i, s in rank:
+      if hps[i].startswith(str(pokemon.hp)):
+        index, score = i, s
+        match = "{}({}hp)".format(pokemons_name[index], pokemon.hp)
+        flag = True
+    if not flag:
+      pokemons = [(pokemons_name[i], hps[i]) for i in range(pokemons_name)]
+      raise Exception("not found target: {}, pokemons: {}".format(pokemon, pokemons))
+  elif pokemon.lv:
+    raise Exception("not support yet")
+  elif pokemon.gender:
+    raise Exception("not support yet")
+  elif pokemon.no:
+    index, score = rank[pokemon.no-1]
+    match = "{}(#{})".format(pokemons_name[index], pokemon.no)
   max_ocr_score["pokemon"] = max(max_ocr_score["pokemon"], score)
-  logger.info("🕹ACT choose pokemon[{}]: {}#{}({:.3f})".format(index, match, p_no, score))
+  logger.info("🕹ACT choose pokemon[{}]: {}({:.3f})".format(index, match, score))
 
   # select
   for i in range(index):

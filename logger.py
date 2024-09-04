@@ -3,6 +3,8 @@ import datetime
 import sys
 import os
 
+from config import conf
+
 logger = logging.getLogger("pokerogue")
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
@@ -24,11 +26,12 @@ else:
   console.setLevel(logging.INFO)
   logger.addHandler(console)
 
-  if not os.path.exists("./log"):
-    os.mkdir("./log")
-  log_filename = "./log/{}.log".format(datetime.datetime.now().strftime('%m%d_%H%M'))
-  file = logging.FileHandler(filename=log_filename, encoding='utf-8', mode='w')
-  file.setLevel(logging.DEBUG)
-  file.setFormatter(formatter)
+  if conf.SAVE_DEBUG_LOG:
+    if not os.path.exists("./log"):
+      os.mkdir("./log")
+    log_filename = "./log/{}.log".format(datetime.datetime.now().strftime('%m%d_%H%M'))
+    file = logging.FileHandler(filename=log_filename, encoding='utf-8', mode='w')
+    file.setLevel(logging.DEBUG)
+    file.setFormatter(formatter)
 
-  logger.addHandler(file)
+    logger.addHandler(file)

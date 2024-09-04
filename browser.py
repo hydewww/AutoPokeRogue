@@ -1,15 +1,10 @@
-import json
-import psutil
-from time import sleep
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-
-from psutil import ZombieProcess
-from selenium.common.exceptions import NoSuchWindowException, InvalidSessionIdException, WebDriverException
 
 from logger import logger
 from config import conf
@@ -20,73 +15,21 @@ CANVAS_ORI_WIDTH = 1920
 CANVAS_ORI_HEIGHT = 1080
 TOP_BAR_HEIGHT = 30
 RATIO = 2  # 1 / 1.6 / 2
-_browser_width = int(1920 / conf.RESOLUTION_SCALE)
-_canvas_height = int(1080 / conf.RESOLUTION_SCALE)
+_browser_width = int(CANVAS_ORI_WIDTH / conf.RESOLUTION_SCALE)
+_canvas_height = int(CANVAS_ORI_HEIGHT / conf.RESOLUTION_SCALE)
 _browser_height = _canvas_height + TOP_BAR_HEIGHT
-
-sess_file = './chrome_sess'
-
-
-def get_existing_sess():
-  global _browser
-  try:
-    with open(sess_file, 'r') as f:
-      data = json.load(f)
-    url = data['url']
-    port = url.rsplit(':', 1)[1]
-    sess_id = data['sess_id']
-
-    existed = False
-    for process in psutil.process_iter():
-      if existed:
-        break
-      if 'chrome' in process.name().lower():
-        try:
-          # logger.debug(f"{process.name()} {process.cmdline()}")
-          for line in process.cmdline():
-            if port in line:
-              existed = True
-              break
-        except ZombieProcess:
-          continue
-        except Exception as e:
-          raise e
-
-    if not existed:
-      return False
-
-    driver = webdriver.Remote(command_executor=url, options=webdriver.ChromeOptions())
-    driver.close()
-    driver.quit()
-    driver.session_id = sess_id
-    sleep(1)
-    driver.find_element(By.TAG_NAME, 'canvas')
-  except FileNotFoundError:
-    return False
-  except (NoSuchWindowException, InvalidSessionIdException):
-    driver.quit()
-    return False
-  except WebDriverException as e:
-    driver.quit()
-    return False
-  except Exception as e:
-    print("Exception: {}".format(e))
-    return False
-
-  _browser = driver
-  return True
-
-
-def save_sess():
-  with open(sess_file, 'w') as f:
-    json.dump({'url': _browser.command_executor._url, 'sess_id': _browser.session_id}, f)
 
 
 def init():
   global _browser
 
-  if get_existing_sess():
-    return
+  if not os.path.exists(conf.CHROME_DRIVER_PATH):
+    logger.critical("chrome driver not installed, check README.md")
+    exit(1)
+
+  if conf.COOKIE == "":
+    logger.critical("empty cookie, check README.md and modify config.json")
+    exit(1)
 
   options = webdriver.ChromeOptions()
   options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -122,8 +65,6 @@ def init():
                        'path': '/',
                        'secure': True,
                        'sameSite': 'Strict'})
-
-  save_sess()
 
 
 def close():

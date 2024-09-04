@@ -4,6 +4,7 @@ import re
 import text
 from logger import logger
 import const
+from config import conf
 
 THROW_BALL = "ThrowBall"
 SWITCH_POKEMON = "SwitchPokemon"
@@ -25,10 +26,77 @@ EVOLVE = "Evolve"
 DAILY_DONE = "Daily Done"
 
 
+class Pokemon:
+  __re_no = re.compile(r"#(\d)")
+  __re_hp = re.compile(r"(\d+) ?HP\)", re.I)
+  __re_lv = re.compile(r"lvl(\d+)", re.I)
+
+  def __init__(self, s: str):
+    self.p = None
+    self.hp = None
+    self.no = None
+    self.lv = None
+    self.gender = None
+
+    s = s.strip()
+    match = self.__re_no.search(s)
+    if match:
+      self.p = s[:match.start()].strip("() ")
+      self.no = int(match.group(1))
+      return
+
+    match = self.__re_lv.search(s)
+    if match:
+      self.p = s[:match.start()].strip("() ")
+      self.lv = int(match.group(1))
+      return
+
+    if "(male)" in s:
+      self.p = s.replace("(male)", "").strip()
+      self.gender = 1
+      return
+    elif "(female)" in s:
+      self.p = s.replace("(female)", "").strip()
+      self.gender = 0
+      return
+
+    match = self.__re_hp.search(s)
+    if match:
+      self.p = s[:match.start()].strip("() ")
+      self.hp = int(match.group(1))
+      return
+
+    if "(" in s and ")" in s:
+      raise Exception("Unknown special pokemon: {}".format(s))
+
+    self.p = s
+    return
+
+  def my_dict(self):
+    attrs = {}
+    for k, v in self.__dict__.items():
+      if v is not None:
+        attrs[k] = v
+    return attrs
+
+  def __str__(self):
+    return str(self.my_dict())
+
+  def __repr__(self):
+    return str(self.my_dict())
+
+  def __eq__(self, other):
+    sd, od = self.__dict__, other.__dict__
+    for k in sd.keys():
+      if sd[k] != od[k]:
+        return False
+    return True
+
+
 class Command:
   def __init__(self, act, double=None, double_idx=None, item=None, ball=None, wave_no=None, times=None,
                move=None, side=None, old_move=None,
-               from_p=None, to_p=None, p_click_cnt=None, from_p_no=None, from_p_lv=None, from_p_hp=None):
+               from_p=None, to_p=None, p_click_cnt=None):
     self.act = act
     self.double = double
     self.double_idx = double_idx
@@ -39,12 +107,12 @@ class Command:
     self.move = move
     self.old_move = old_move
     self.side = side
-    self.from_p = from_p
-    self.to_p = to_p
+    self.from_p = Pokemon(from_p) if from_p else None
+    if isinstance(to_p, list):  # Release
+      self.to_p = [Pokemon(p) for p in to_p]
+    else:
+      self.to_p = Pokemon(to_p) if to_p else None
     self.p_click_cnt = p_click_cnt
-    self.from_p_no = from_p_no
-    self.from_p_lv = from_p_lv
-    self.from_p_hp = from_p_hp
 
   def from_dict(self, dicts):
     for k, v in dicts.items():
@@ -74,36 +142,37 @@ class Command:
     return True
 
 
+__re_switch = re.compile(r"^(send in|send|pick) ", re.I)
+__re_to = re.compile(r"( for | to )", re.I)
+__re_reward = re.compile(r"^(shop|reward):* ", re.I)
+__re_all = re.compile(" all ", re.I)
+
+
 def preproc(cmd: str):
-  cmd = cmd.strip()
+  cmd = cmd.strip(' "')
   if cmd.startswith("- "):
     cmd = cmd[len("- "):].strip()
-  res = (cmd.
-         replace("Send in ", "Switch > ").
-         replace("Send In ", "Switch > ").
-         replace("Send ", "Switch > ").
-         replace("Pick ", "Switch > ").
+  cmd = (cmd.
+         replace("::", ":").
          replace("Swap ", "Switch ").
-         replace(" for ", " > ").  # Pre-switch a for b
-         replace(" to ", " > ").
          replace(" + ", " & ").
-         replace("Shop:", "Reward:").
-         replace(" ALL ", " All ")  # Transfer ALL
+         replace("  ", " ")
          )
-  if res != cmd:
-    pass
-    # logger.debug("preproc cmd: [{}] => [{}]".format(cmd, res))
-  return res
+  cmd = __re_switch.sub("Switch > ", cmd)
+  cmd = __re_to.sub(" > ", cmd)
+  cmd = __re_reward.sub("Reward: ", cmd)
+  cmd = __re_all.sub(" All ", cmd)
+  if "switch" in cmd.lower() and len(cmd.split(" ")) == 2:
+    cmd = " > ".join(cmd.split(" "))
+  return cmd
 
 
 def __rec_switch(cmd: str):
-  match = re.search(r"Switch( >)?(?P<from>( [\w\-'.]+)+)? >(?P<to>( [\w\-'.]+)+)", cmd, re.I)
+  match = re.search(r"Switch( >)?(?P<from>( [\w\-'.]+)+)? >(?P<to> .*)", cmd, re.I)
   if match is None:
     raise Exception("Not match switch [{}]".format(cmd))
   f = match.group("from")
-  if f is not None:
-    f = f.strip()
-  return f, match.group("to").strip()
+  return f, match.group("to")
 
 
 def __rec_transfer(cmd: str):
@@ -159,6 +228,17 @@ def __rec_transfer2(cmd: str):
   return [Command(TRANSFER, from_p=from_pokemon, item=item, to_p=to_pokemon)]
 
 
+def __rec_move_in_reward(cmd: str):
+  if " | " not in cmd or not (" > " in cmd or " skip " in cmd.lower()):
+    return None
+
+  cmds = recognize_cmd(cmd)
+  if cmds and len(cmds) == 1 and cmds[0].act in [LEARN_MOVE, SKIP_MOVE]:
+    return cmds
+  else:
+    raise Exception("not found move in reward: {}".format(cmd))
+
+
 def __rec_reward(cmd: str):
   match = re.search(r"Reward: (?P<lock>LOCK RARITIES > )?(?P<reroll>Reroll (x(?P<re_cnt>\d) )?> )?(?P<reward>.+)",
                     cmd, re.I)
@@ -177,17 +257,12 @@ def __rec_reward(cmd: str):
     cmds.append(Command(REWARD, item=reward))
     return cmds
 
-  if "Memory Mushroom" in reward:  # TODO
+  if "Memory Mushroom" in reward:
     cmds.append(Command(REWARD, item="Memory Mushroom"))
     idx = reward.index("Memory Mushroom") + len("Memory Mushroom")
-    tmp = reward[idx:].strip()
-    if "|" in tmp and ">" in tmp:
-      try:
-        cmds2 = recognize_cmd(tmp)
-        if cmds2 and len(cmds2) == 1 and cmds2[0].act == LEARN_MOVE:
-          cmds.extend(cmds2)
-      except Exception as e:
-        raise Exception("Invalid Memory Mushroom Command: {}, err: ".format(cmd, e))
+    cmds2 = __rec_move_in_reward(reward[idx:])
+    if cmds2:
+      cmds.extend(cmds2)
     return cmds
 
   if "TM" in reward:
@@ -197,14 +272,9 @@ def __rec_reward(cmd: str):
     item = reward[:match.start()].strip()
     pokemon = match.group()
     cmds.append(Command(REWARD, item=item, to_p=pokemon, p_click_cnt=2))
-    tmp = reward[match.start():].strip()
-    if "|" in tmp and ">" in tmp:
-      try:
-        cmds2 = recognize_cmd(tmp)
-        if cmds2 and len(cmds2) == 1 and cmds2[0].act == LEARN_MOVE:
-          cmds.extend(cmds2)
-      except Exception as e:
-        raise Exception("Invalid TM Command: {}, err: ".format(cmd, e))
+    cmds2 = __rec_move_in_reward(reward[match.start():])
+    if cmds2:
+      cmds.extend(cmds2)
     return cmds
 
   for key in const.ITEM_2CLICK + const.ITEM_1CLICK_WITH_MOVE:
@@ -232,6 +302,13 @@ def __rec_reward(cmd: str):
           raise Exception("Unknown reward [{}]".format(reward))
         pokemon, move = match.group(), pokemon_move[match.end():].strip()
       cmds.append(Command(REWARD, item=reward, to_p=pokemon, move=move, p_click_cnt=1))
+      return cmds
+    elif key in const.ITEM_EVOLUTION and " | " in pokemon:
+      cmds2 = __rec_move_in_reward(pokemon)
+      pokemon = pokemon[:pokemon.index(" |")]
+      cmds.append(Command(REWARD, item=reward, to_p=pokemon, p_click_cnt=2))
+      if cmds2:
+        cmds.extend(cmds2)
       return cmds
     else:
       pokemon = pokemon.strip("() ")
@@ -343,6 +420,7 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
       if idx == 1:
         # modify "switch a>b & c>d" => "switch a>b", "switch c>d "
         if (lcmd.startswith("switch ") and
+                not (c.endswith(" L") or c.endswith(" R")) and
                 (" > " in c or
                  const.POKEMONS_PATTERN.search(c.strip()) is not None)):  # maybe is move
           c = "Switch " + c
@@ -373,12 +451,11 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
     new, old = tmp[0].strip(), tmp[1].strip()
     match = const.POKEMONS_PATTERN.search(old)
     if match:
-      pokemon, no, lv, hp = __rec_special_pokemon(old)
-      return [Command(REPLACE_POKEMON, to_p=new, from_p=pokemon, from_p_no=no, from_p_lv=lv, from_p_hp=hp)]
+      return [Command(REPLACE_POKEMON, to_p=new, from_p=old)]
 
     match = const.POKEMONS_PATTERN.search(new)
     if match:
-      if len(new)-match.end() >= const.MOVE_NAME_MIN_LEN:
+      if len(new) - match.end() >= const.MOVE_NAME_MIN_LEN:
         # xxx aaa > bbb
         new = new[match.end():].strip()
         return [Command(LEARN_MOVE, move=new, old_move=old, to_p=match.group())]
@@ -399,76 +476,80 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
 
 
 def __rec_times(cmd: str):
-  match = re.search(r"(- )?(.*) x(\d+)$", cmd, re.IGNORECASE)
+  match = re.search(r"(- )?(.*) x ?(\d+)$", cmd, re.IGNORECASE)
   if not match:
     return cmd, 1
 
   return match.group(2), int(match.group(3))
 
 
-_gen_fname = 'daily.gen'
+def split_cmds(all_cmds: list[list[Command]]):
+  wave_cmds = []
+  final_cmds = []
+  for cmds in all_cmds:
+    if cmds[0].act not in [NEW_WAVE, DAILY_DONE]:
+      wave_cmds.extend(cmds)
+      continue
+    elif len(wave_cmds) == 0:
+      wave_cmds = cmds
+      continue
+    else:
+      double = False
+      for cmd in wave_cmds:
+        if cmd.double:
+          double = True
+          break
+      if double:
+        for cmd in wave_cmds:
+          cmd.double = double
+      final_cmds.append(wave_cmds)
+      wave_cmds = cmds
+  final_cmds.append(wave_cmds)
+  return final_cmds
 
 
 def cmd_gen():
-  ori = open('daily.txt', 'r', encoding='utf-8')
+  ori = open(conf.DAILY_RUN_GUIDE, 'r', encoding='utf-8')
   lines = ori.readlines()
   ori.close()
 
-  gen_lines = []
+  json_lines = []
+  all_cmds = []
+  has_err = False
+
   for idx, line in enumerate(lines):
     line = line.strip("-").strip()
     if line == "" or "Daily Run Guide" in line:
-      gen_lines.append("\n")
+      json_lines.append("\n")
       continue
 
     cmd, times = __rec_times(line)
     try:
       cmds = recognize_cmd(cmd)
     except Exception as e:
-      logger.warning("❌ {}, line={}".format(e, idx+1))
-      gen_lines.append("{}\n".format(e))
+      logger.warning("❌ line:{}, {},".format(idx + 1, e))
+      json_lines.append("{}\n".format(e))
+      has_err = True
       continue
     if times > 1:
       cmds = cmds * times
-    gen_lines.append("{}\n".format(json.dumps(cmds, default=lambda x: x.my_dict(), ensure_ascii=False)))
+    json_lines.append("{}\n".format(json.dumps(cmds, default=lambda x: x.my_dict(), ensure_ascii=False)))
+    all_cmds.append(cmds)
 
-  f = open(_gen_fname, 'w', encoding='utf-8')
-  f.writelines(gen_lines)
-  f.close()
+  if conf.SAVE_CMD_JSON:
+    f = open('daily.gen', 'w', encoding='utf-8')
+    f.writelines(json_lines)
+    f.close()
+
+  if has_err:
+    raise Exception("has unknown command")
+
+  return split_cmds(all_cmds)
 
 
 def cmd_generator():
-  with open(_gen_fname, 'r') as file:
-    wave_cmds = []
-    for line in file:
-      line = line.strip()
-      if line == "":
-        continue
-
-      try:
-        cmds = json.loads(line)
-        cmds = [Command(None).from_dict(cmd) for cmd in cmds]
-      except:
-        logger.warning("❌ line: {}".format(line))
-        exit()
-      if cmds[0].act not in [NEW_WAVE, DAILY_DONE]:
-        wave_cmds.extend(cmds)
-        continue
-      elif len(wave_cmds) == 0:
-        wave_cmds = cmds
-        continue
-      else:
-        double = False
-        for cmd in wave_cmds:
-          if cmd.double:
-            double = True
-            break
-        if double:
-          for cmd in wave_cmds:
-            cmd.double = double
-        yield wave_cmds
-        wave_cmds = cmds
-    yield wave_cmds
+  for cmds in cmd_gen():
+    yield cmds
 
 
 cmd_gen()

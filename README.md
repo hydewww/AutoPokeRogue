@@ -7,7 +7,10 @@ https://googlechromelabs.github.io/chrome-for-testing/
 - [x] shiny recognize
 - [x] sidebar action
 - [x] reuse selenium session after Exception
-- [ ] multi same pokemon select
-- [ ] config file
+- [x] config file
+- [x] multi same pokemon select
+- [ ] Baton
+
 - [ ] read guide online
 - [ ] auto downsize browser
+- [ ] train ocr by font

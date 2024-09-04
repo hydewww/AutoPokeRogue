@@ -6,6 +6,7 @@ __pycache__/*
 chromedriver
 locate/*
 daily.txt
-daily.gen
+daily.gen*
 chrome_sess
 tmp.py
+config.json

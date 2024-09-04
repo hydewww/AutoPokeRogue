@@ -15,7 +15,9 @@ def _screenshot_from_browser(crop_params=None):
   data = browser.screenshot_as_base64()
   png = b64decode(data)
   img = Image.open(BytesIO(png))
-  img.save('./screenshot/last.png')  # debug
+  # img = Image.open("./locate/pokemons2.png")
+  if conf.SAVE_SCREENSHOT:
+    img.save('./screenshot/last.png')  # debug
   ratio = conf.RESOLUTION_SCALE
   if crop_params is None:
     return [img]
@@ -24,13 +26,14 @@ def _screenshot_from_browser(crop_params=None):
     x1, y1, x2, y2 = crop_params[i]
     crop_params[i] = (int(x1 / ratio), int(y1 / ratio), int(x2 / ratio), int(y2 / ratio))
   imgs = [img.crop(param) for param in crop_params]
-  imgs[0].save('./screenshot/last.crop.png')  # debug
+  if conf.SAVE_SCREENSHOT:
+    img.save('./screenshot/last.png')  # debug
   return imgs
 
 
 def _proc(img, save_name=None, gray_scale=True):
   img = img.convert("L") if gray_scale else img  # better for ocr
-  if save_name:
+  if save_name and conf.SAVE_SCREENSHOT:
     fname = "./screenshot/{}.png".format(save_name)
     dname = fname.rsplit("/", 1)[0]
     if not os.path.exists(dname):
@@ -115,29 +118,39 @@ def learn_moves(save_prefix=None):
 # learn_moves(save_prefix="0")
 
 
-def pokemons(double=None, debug=True):
-  width, height = 320, 70
-  l_x1, r_x1 = 190, 970
+def _pokemons_template(width, height, l_x1, r_x1,
+                       s_l_y1, s_r2_y1,
+                       d_l1_y1, d_l2_y1, d_r1_y1,
+                       s_y_span=165, d_y_span=215,
+                       double=False, save_prefix=None):
   if double is True:
-    p1_y1 = 210
-    p2_y1 = 600
-    p3_y1 = 120
-    y_span = 215
-    crop_params = [(l_x1, p1_y1, l_x1 + width, p1_y1 + height),
-                   (l_x1, p2_y1, l_x1 + width, p2_y1 + height)]
-    crop_params.extend([(r_x1, p3_y1 + i*y_span,
-                         r_x1 + width, p3_y1 + i*y_span + height) for i in range(4)])
+    crop_params = [(l_x1, d_l1_y1, l_x1 + width, d_l1_y1 + height),
+                   (l_x1, d_l2_y1, l_x1 + width, d_l2_y1 + height)]
+    crop_params.extend([(r_x1, d_r1_y1 + i * d_y_span,
+                         r_x1 + width, d_r1_y1 + i * d_y_span + height) for i in range(4)])
   else:
-    l_y1, r_y2 = 256, 256
-    y_span = 165
-    crop_params = [(l_x1, l_y1, l_x1 + width, l_y1 + height)]
-    crop_params.extend([(r_x1, r_y2 + i*y_span,
-                         r_x1+width, r_y2 + i*y_span + height)
+    crop_params = [(l_x1, s_l_y1, l_x1 + width, s_l_y1 + height)]
+    crop_params.extend([(r_x1, s_r2_y1 + i * s_y_span,
+                         r_x1 + width, s_r2_y1 + i * s_y_span + height)
                         for i in range(-1, 4)])
   imgs = _screenshot_from_browser(crop_params=crop_params)
   return [_proc(img,
-                save_name="pokemon/{}".format(idx) if debug else None)
+                save_name="pokemon/{}_{}".format(save_prefix, idx) if save_prefix else None)
           for idx, img in enumerate(imgs)]
+
+
+def pokemons_name(double=None, debug=True):
+  return _pokemons_template(width=320, height=70, l_x1=190, r_x1=970,
+                            s_l_y1=256, s_r2_y1=256,
+                            d_l1_y1=210, d_l2_y1=600, d_r1_y1=120,
+                            double=double, save_prefix="name" if debug else None)
+
+
+def pokemons_hp(double=None, debug=True):
+  return _pokemons_template(width=220, height=72, l_x1=470, r_x1=1658,
+                            s_l_y1=412, s_r2_y1=312,
+                            d_l1_y1=360, d_l2_y1=745, d_r1_y1=164,
+                            double=double, save_prefix="hp" if debug else None)
 
 
 def ball_cursor():

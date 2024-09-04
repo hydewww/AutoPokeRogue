@@ -103,16 +103,21 @@ def learn_moves():
 # learn_moves()
 
 
-def pokemons(double=None):
-  res, t = ocr(screenshot.pokemons(double=double), det=False)
+def pokemons_name(double=None):
+  res, t = ocr(screenshot.pokemons_name(double=double), det=False)
   names = [p[0][0].strip(" .").replace("1", "l") for p in res]
   logger.debug("pokemons({}): {} ({:.2f}s)".format(2 if double else 1, names, t))
   if text.check_pokemons_correctness(names) is False and double is None:
     logger.debug("pokemon names incorrect, try double")
-    doubles = pokemons(double=True)
+    doubles = pokemons_name(double=True)
     return names if len(names) > len(doubles) else doubles
   return names
-# pokemons()
+
+
+def pokemons_hp(double=None) -> list[str]:
+  res, t = ocr(screenshot.pokemons_hp(double=double), det=False)
+  logger.debug("pokemons hp: {} ({:.2f}s)".format(res, t))
+  return [r[0].strip() for r in res]
 
 
 def rewards(cnt=3):
