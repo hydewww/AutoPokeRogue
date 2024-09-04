@@ -10,5 +10,5 @@ paddleocr==2.8.0
 paddlepaddle==3.0.0b1
 Levenshtein==0.25.1
 pytest==8.2.2
-selenium==4.22.0
+selenium==4.23.1
 psutil==6.0.0

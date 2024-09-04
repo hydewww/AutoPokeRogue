@@ -4,6 +4,7 @@ from paddleocr import PaddleOCR
 import screenshot
 import text
 from logger import logger
+from config import conf
 
 engine = PaddleOCR(
   use_gpu=False,
@@ -21,8 +22,8 @@ def ocr(img, det=True):
   :param img: np.array
   :param det: use text detection or not, if False, loc list will not exist in return
   :return: list[list[tuple(str, float, list[4*list[2]])]] =>
-           img_idx[text_idx[(text, score, [lu[x,y], ru[x,y], rd[x,y], ld[x,y]])]]
-           * lu=left up, ru=right up, rd=right down, ld=left down
+           img_idx[text_idx[(text, score, [ul[x,y], ur[x,y], lr[x,y], ll[x,y]])]]
+           * ul=upper left, ur=upper right, lr=lower right, ll=lower left
   """
   _start = time.time()  # cal time
   if isinstance(img, list):  # maybe bug in paddle, return cnt not equal list cnt
@@ -64,7 +65,24 @@ def bottom_screen():
   texts = [p[0].strip() for p in res[0] if p[0].strip() != ""]
   logger.debug("texts: {} ({:.2f}s)".format(texts, t))
   return texts
-# bottom_screen()
+
+
+def bottom_screen_with_chat():
+  res, t = ocr(screenshot.bottom_screen_with_chat())
+  if res[0] is None:
+    logger.debug("texts: {} ({:.2f}s)".format(None, t))
+    return [], False
+  texts = [p[0].strip() for p in res[0] if p[0].strip() != ""]
+  trainer = ""
+  if res[1] is not None:
+    chat = res[1][0]
+    logger.debug("chat ocr: {}".format(res[1]))
+    x1_max, y1_max, y2_min = 28/conf.RESOLUTION_SCALE, 16/conf.RESOLUTION_SCALE, 54/conf.RESOLUTION_SCALE
+    if (chat[2][0][0] <= x1_max and chat[2][0][1] <= y1_max and chat[2][-1][1] >= y2_min
+            and 3 <= len(chat[0].strip()) <= 30):
+      trainer = chat[0].strip()
+  logger.debug("texts: {}, trainer: {} ({:.2f}s)".format(texts, trainer, t))
+  return texts, trainer != ""
 
 
 def fight_moves():
@@ -119,7 +137,7 @@ def wave_no():
 
   try:
     wave = res[0][0]
-    no1 = (abs(int(wave[0].strip(".:- "))), wave[1])
+    no1 = (abs(int(wave[0].strip(".:-= "))), wave[1])
   except ValueError:
     no1 = (-1, 0)
 
@@ -132,7 +150,7 @@ def wave_no():
   no = no1 if no1[1] > no2[1] else no2
   logger.debug("wave no: {}({:.3f})".format(no[0], no[1]))
 
-  min_score = 0.7  # TODO
+  min_score = 0.4  # TODO
   if no[1] < min_score:
     raise Exception("Not found wave no: {}".format(no))
 

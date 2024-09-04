@@ -61,7 +61,11 @@ def fight(move, side=None, double_idx=None):
 
   # move recognize
   min_score = 0.5  # TODO
-  index, score, match = text.find_in_ocr_texts(move, ocr.fight_moves(), min_score=min_score)
+  moves = ocr.fight_moves()
+  for m in moves:
+    if "of confusion!" in m:
+      moves = ocr.fight_moves()
+  index, score, match = text.find_in_ocr_texts(move, moves, min_score=min_score)
   max_ocr_score["fight_move"] = max(max_ocr_score["fight_move"], score)
   logger.info("🕹ACT use move[{}]: {}({:.3f})-{}".format(index, match, score, side if side else ""))
 
@@ -75,11 +79,13 @@ def fight(move, side=None, double_idx=None):
   else:
     keyboard.up()
   if not side:
-    keyboard.confirm(wait_time)
+    keyboard.confirm(wait=wait_time)
+    keyboard.up()  # after life dew
     return
 
-  # side select
   keyboard.confirm()
+  keyboard.up()  # after life dew
+  # side select
   if side == "R":
     keyboard.right()
   else:
@@ -172,11 +178,12 @@ def choose_move(move):
   keyboard.confirm()
 
 
-def learn_new_move(old_move=None, new_move=None):
+def learn_new_move(old_move=None, new_move=None, step=None):
   # New Move
 
-  # xxx wants to learn the / move xxx.
-  keyboard.confirm(wait=keyboard.WaitShortAction)
+  if step is None:
+    # xxx wants to learn the / move xxx.
+    keyboard.confirm(wait=keyboard.WaitShortAction)
   # However, xxx already / knows four moves.
   keyboard.confirm(wait=keyboard.WaitShortAction)
   # Should a move be forgotten and / replaced with xxx?
@@ -199,15 +206,15 @@ def learn_new_move(old_move=None, new_move=None):
 
   # Choose
   choose_move(old_move)
-  time.sleep(keyboard.WaitDialog)
+  time.sleep(keyboard.WaitDialog*2)
   # 1,2,and... ... ... Poof!
   keyboard.confirm(wait=keyboard.WaitDialog)
   # xxx forgot how to / use xxx.
-  keyboard.confirm(wait=keyboard.WaitDialog)
+  keyboard.confirm(wait=keyboard.WaitDialog*3)
   # And ...
-  keyboard.confirm(wait=keyboard.WaitDialog)
+  keyboard.confirm(wait=keyboard.WaitDialog*2)
   # xxx learned / xxx!
-  keyboard.confirm()
+  keyboard.confirm(wait=keyboard.WaitDialog*2)
 
 
 def memory_mushroom(pokemon, new_move, old_move, double=None):

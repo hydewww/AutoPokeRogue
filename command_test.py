@@ -61,6 +61,12 @@ def test_pre_switch_double():
   assert c[1] == command.Command(command.PRE_SWITCH_POKEMON,
                                  double_idx=2, from_p=None, to_p="d")
 
+def test_pre_special():
+  c = command.recognize_cmd("- Pre-Switch to Mr. Mime")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.PRE_SWITCH_POKEMON,
+                                 from_p=None, to_p="Mr. Mime")
+
 
 def test_transfer1():
   c = command.recognize_cmd("Transfer item from a to b")
@@ -119,6 +125,13 @@ def test_learn_move2():
   assert len(c) == 1
   assert c[0] == command.Command(command.LEARN_MOVE, to_p="Shiftry",
                                  old_move="Razor Leaf", move="Leaf Blade")
+
+
+def test_learn_move3():
+  c = command.recognize_cmd("- Drizzile | U-Turn > Tearful Look")
+  assert len(c) == 1
+  assert c[0] == command.Command(command.LEARN_MOVE, to_p="Drizzile",
+                                 old_move="Tearful Look", move="U-Turn")
 
 
 def test_reward_reroll():
@@ -192,6 +205,14 @@ def test_reward_tm2():
   assert c[0] == command.Command(command.REWARD, item="TM Toxic", to_p="Clauncher", p_click_cnt=2)
   assert c[1] == command.Command(command.LEARN_MOVE, to_p="Clauncher",
                                  old_move="Flail", move="Toxic")
+
+
+def test_reward_tm3():
+  c = command.recognize_cmd("Reward: TM017 Surf Psyduck | Surf > Water Pulse")
+  assert len(c) == 2
+  assert c[0] == command.Command(command.REWARD, item="TM017 Surf", to_p="Psyduck", p_click_cnt=2)
+  assert c[1] == command.Command(command.LEARN_MOVE, to_p="Psyduck",
+                                 old_move="Water Pulse", move="Surf")
 
 
 def test_reward_memory_mushroom1():

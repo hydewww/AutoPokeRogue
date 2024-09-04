@@ -5,7 +5,8 @@ BALLS = ["Poke Ball", "Great Ball", "Ultra Ball", "Rogue Ball", "Master Ball", "
 ITEM_VITAMIN = ["HP Up", "Protein", "Iron", "Calcium", "Zinc", "Carbos"]
 ITEM_PP = ["PP Up", "PP Max"]
 ITEM_EVOLUTION = ["Linking Cord", " Stone", "ed Pot", " Apple", " Teacup", "Black Augurite", "Scroll Of Waters",
-                  "Galarica Cuff", "Galarica Wreath", "Peat Block", " Armor", "Metal Alloy", "Scroll Of Darkness", ]
+                  "Galarica Cuff", "Galarica Wreath", "Peat Block", " Armor", "Metal Alloy", "Scroll Of Darkness",
+                  "Max Mushrooms", "Gyaradosite"]
 ITEM_REST_CONSUMABLE = [" Candy", " Mint"]
 
 ITEM_TYPE_BOOSTING = ["Silk Scarf", "Black Belt", "Sharp Beak", "Poison Barb", "Soft Sand", "Hard Stone",
@@ -14,13 +15,15 @@ ITEM_TYPE_BOOSTING = ["Silk Scarf", "Black Belt", "Sharp Beak", "Poison Barb", "
 ITEM_SPECIES_BOOSTING = ["Light Ball", "Thick Club", "Metal Powder", "Quick Powder"]
 ITEM_REST_HELD = [" Berry", "Reviver Seed", "Golden Punch", " Orb", "Wide Lens", "Baton",
                   "Focus Band", "Grip Claw", "Quick Claw", "King's Rock", "Leftovers", "Form Change", "Shell Bell",
-                  "Soothe Bell", "Soul Dew", "Multi Lens", "Mini Black", "Lucky Egg", "Golden Egg"]
+                  "Soothe Bell", "Soul Dew", "Multi Lens", "Mini Black", "Lucky Egg", "Golden Egg",
+                  "Scope Lens"]
 
 ITEM_2CLICK = (ITEM_VITAMIN + ITEM_EVOLUTION + ITEM_TYPE_BOOSTING + ITEM_SPECIES_BOOSTING +
                ITEM_REST_HELD + ITEM_REST_CONSUMABLE + ["Revive", "Potion", "Restore", "Full Heal", "Elixir"])
 ITEM_1CLICK_WITH_MOVE = ITEM_PP + ["Ether"]
 
 POKEMON_NAME_MIN_LEN = 3
+MOVE_NAME_MIN_LEN = 3
 
 POKEMONS = (["Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Charizard", "Squirtle", "Wartortle",
              "Blastoise", "Caterpie", "Metapod", "Butterfree", "Weedle", "Kakuna", "Beedrill", "Pidgey", "Pidgeotto",

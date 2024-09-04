@@ -3,9 +3,9 @@ import numpy as np
 from PIL import Image
 import cv2
 
-import browser
 import screenshot
 from logger import logger
+from config import conf
 
 
 def ball_cursor_index():
@@ -41,7 +41,7 @@ def find_icon(img, icon_path, threshold=0.7, find_all=False, save_name=None):
                 if find_all=False, return 1 if matched else 0
   """
   icon = Image.open(icon_path)
-  icon = icon.resize((int(icon.size[0] / browser.RATIO), int(icon.size[1] / browser.RATIO)))
+  icon = icon.resize((int(icon.size[0] / conf.RESOLUTION_SCALE), int(icon.size[1] / conf.RESOLUTION_SCALE)))
   icon = np.array(icon.convert("RGB"))
   h, w = icon.shape[:2]
   logger.debug("icon shape: {}x{}, img shape: {}".format(w, h, img.shape[:2]))
@@ -65,7 +65,7 @@ def find_icon(img, icon_path, threshold=0.7, find_all=False, save_name=None):
   if max_score < threshold:
     return []
   elif find_all is False and save_name is None:
-    return [(x * browser.RATIO, y * browser.RATIO, (x + w) * browser.RATIO, (y + h) * browser.RATIO)]
+    return [(x * conf.RESOLUTION_SCALE, y * conf.RESOLUTION_SCALE, (x + w) * conf.RESOLUTION_SCALE, (y + h) * conf.RESOLUTION_SCALE)]
 
   boxes = [(x, y, x + w, y + h)]
   while find_all:
@@ -93,8 +93,8 @@ def find_icon(img, icon_path, threshold=0.7, find_all=False, save_name=None):
     Image.fromarray(img).save("./screenshot/{}.png".format(save_name))
 
   for i in range(len(boxes)):
-    boxes[i] = (int(boxes[i][0] * browser.RATIO), int(boxes[i][1] * browser.RATIO),
-                int(boxes[i][2] * browser.RATIO), int(boxes[i][3] * browser.RATIO))
+    boxes[i] = (int(boxes[i][0] * conf.RESOLUTION_SCALE), int(boxes[i][1] * conf.RESOLUTION_SCALE),
+                int(boxes[i][2] * conf.RESOLUTION_SCALE), int(boxes[i][3] * conf.RESOLUTION_SCALE))
   return boxes
 
 

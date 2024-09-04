@@ -81,11 +81,13 @@ def preproc(cmd: str):
   res = (cmd.
          replace("Send in ", "Switch > ").
          replace("Send In ", "Switch > ").
+         replace("Send ", "Switch > ").
          replace("Pick ", "Switch > ").
          replace("Swap ", "Switch ").
          replace(" for ", " > ").  # Pre-switch a for b
          replace(" to ", " > ").
          replace(" + ", " & ").
+         replace("Shop:", "Reward:").
          replace(" ALL ", " All ")  # Transfer ALL
          )
   if res != cmd:
@@ -95,7 +97,7 @@ def preproc(cmd: str):
 
 
 def __rec_switch(cmd: str):
-  match = re.search(r"Switch( >)?(?P<from>( [\w\-']+)+)?( >)?(?P<to>( [\w\-']+)+)", cmd, re.I)
+  match = re.search(r"Switch( >)?(?P<from>( [\w\-'.]+)+)? >(?P<to>( [\w\-'.]+)+)", cmd, re.I)
   if match is None:
     raise Exception("Not match switch [{}]".format(cmd))
   f = match.group("from")
@@ -144,6 +146,17 @@ def __rec_transfer(cmd: str):
     res.append(Command(TRANSFER, from_p=p.strip(), item=item, to_p=to_pokemon))
 
   return res
+
+
+# TODO
+def __rec_transfer2(cmd: str):
+  tmp = cmd.split(" | ")
+  from_pokemon = tmp[0].strip()
+  tmp = tmp[1].split(">")
+  item = tmp[0].replace("Transfer ", "").strip()
+  to_pokemon = tmp[1].strip()
+
+  return [Command(TRANSFER, from_p=from_pokemon, item=item, to_p=to_pokemon)]
 
 
 def __rec_reward(cmd: str):
@@ -200,7 +213,7 @@ def __rec_reward(cmd: str):
 
     item_last_idx = reward.index(key) + len(key)
     pokemon = reward[item_last_idx:].strip()
-    if len(pokemon) <= const.POKEMON_NAME_MIN_LEN:
+    if len(pokemon) < const.POKEMON_NAME_MIN_LEN:
       continue
 
     reward = reward[:item_last_idx].strip()
@@ -282,11 +295,13 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
   if "end of run" in lcmd:
     return [Command(DAILY_DONE)]
 
-  if lcmd == "do not keep":
+  if lcmd == "do not keep" or lcmd == "don't keep":
     return [Command(NOT_KEEP_POKEMON)]
 
   if lcmd.startswith("transfer "):
     return __rec_transfer(cmd)
+  elif " Transfer " in cmd:
+    return __rec_transfer2(cmd)
 
   if lcmd.startswith("reward: "):
     return __rec_reward(cmd)
@@ -312,7 +327,7 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
     tmp = cmd.split(" | ")[1]
     return [Command(SKIP_MOVE, move=tmp[len("skip "):])]
 
-  if " > " in cmd:
+  if " > " in cmd and " | " not in cmd:
     tmp = cmd.split(" > ")
     for move in const.SWITCH_MOVES:
       if move in tmp[0]:
@@ -363,9 +378,12 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
 
     match = const.POKEMONS_PATTERN.search(new)
     if match:
-      # xxx aaa > bbb
-      new = new[match.end():].strip()
-      return [Command(LEARN_MOVE, move=new, old_move=old, to_p=match.group())]
+      if len(new)-match.end() >= const.MOVE_NAME_MIN_LEN:
+        # xxx aaa > bbb
+        new = new[match.end():].strip()
+        return [Command(LEARN_MOVE, move=new, old_move=old, to_p=match.group())]
+      else:
+        return [Command(REPLACE_POKEMON, to_p=new, from_p=old)]
 
     logger.warning("unsure learn move command: {}".format(cmd))
     return [Command(LEARN_MOVE, move=new, old_move=old)]
@@ -399,7 +417,7 @@ def cmd_gen():
   gen_lines = []
   for idx, line in enumerate(lines):
     line = line.strip("-").strip()
-    if line == "" or line.startswith("Daily Run Guide"):
+    if line == "" or "Daily Run Guide" in line:
       gen_lines.append("\n")
       continue
 
@@ -420,7 +438,6 @@ def cmd_gen():
 
 
 def cmd_generator():
-  cmd_gen()
   with open(_gen_fname, 'r') as file:
     wave_cmds = []
     for line in file:
@@ -431,8 +448,8 @@ def cmd_generator():
       try:
         cmds = json.loads(line)
         cmds = [Command(None).from_dict(cmd) for cmd in cmds]
-      except Exception as e:
-        logger.warning("❌ {} line: {}".format(e, line))
+      except:
+        logger.warning("❌ line: {}".format(line))
         exit()
       if cmds[0].act not in [NEW_WAVE, DAILY_DONE]:
         wave_cmds.extend(cmds)
@@ -452,3 +469,6 @@ def cmd_generator():
         yield wave_cmds
         wave_cmds = cmds
     yield wave_cmds
+
+
+cmd_gen()

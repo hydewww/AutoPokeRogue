@@ -3,11 +3,12 @@ import os
 from base64 import b64decode
 from PIL import Image
 from io import BytesIO
+
 import browser
+from config import conf
 
 ORI_WIDTH = browser.CANVAS_ORI_WIDTH
 ORI_HEIGHT = browser.CANVAS_ORI_HEIGHT
-RATIO = browser.RATIO
 
 
 def _screenshot_from_browser(crop_params=None):
@@ -15,7 +16,7 @@ def _screenshot_from_browser(crop_params=None):
   png = b64decode(data)
   img = Image.open(BytesIO(png))
   img.save('./screenshot/last.png')  # debug
-  ratio = RATIO
+  ratio = conf.RESOLUTION_SCALE
   if crop_params is None:
     return [img]
 
@@ -62,6 +63,14 @@ def bottom_screen(save_name=None):
 # bottom_screen(save_name="0")
 
 
+def bottom_screen_with_chat(save_name=None):
+  imgs = _screenshot_from_browser(crop_params=[
+    (0, 690, ORI_WIDTH, ORI_HEIGHT),
+    (108, 760, 700, 832)
+  ])
+  return [_proc(imgs[0], save_name=save_name), _proc(imgs[1], save_name="chatter")]
+
+
 def rival_screen():
   img = _screenshot_from_browser(crop_params=[(25, 320, 600, 400)])[0]
   return _proc(img, gray_scale=False)
@@ -69,13 +78,13 @@ def rival_screen():
 
 def wave_nos():
   x1 = 1840
-  l1_y1, l2_y1 = 0, 100
+  l1_y1, l2_y1 = 10, 100
   height = 55
   crop_params = [(x1, l1_y1, ORI_WIDTH-10, l1_y1+height),
                  (x1, l2_y1, ORI_WIDTH-10, l2_y1+height)]
   imgs = _screenshot_from_browser(crop_params=crop_params)
 
-  return [_proc(img, save_name="wave_no_{}".format(idx))
+  return [_proc(img, save_name="wave_no_{}".format(idx), gray_scale=False)
           for idx, img in enumerate(imgs)]
 
 

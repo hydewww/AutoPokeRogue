@@ -78,9 +78,11 @@ def check_pokemons_correctness(pokemons):
   if len(pokemons[0]) < const.POKEMON_NAME_MIN_LEN:
     return False
 
-  reg = re.compile(r"(\d){2,}")
-  for p in pokemons:
-    if reg.search(p) is not None:
+  flag = False
+  for i in range(len(pokemons)-1, 0, -1):
+    if len(pokemons[i]) >= const.POKEMON_NAME_MIN_LEN:
+      flag = True
+    elif flag is True:
       return False
 
   return True

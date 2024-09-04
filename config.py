@@ -4,8 +4,9 @@ import os
 
 class Config:
   def __init__(self):
-    self.cookie = ""
-    self.chrome_driver_path = "./chromedriver"
+    self.COOKIE = ""
+    self.CHROME_DRIVER_PATH = "./chromedriver"
+    self.RESOLUTION_SCALE = 2
 
 
 def load_config():
@@ -14,7 +15,7 @@ def load_config():
   if not os.path.exists(fname):
     config = Config()
     with open(fname, 'w') as f:
-      json.dump(conf.__dict__, f, indent=2)
+      json.dump(config.__dict__, f, indent=2)
     return config
 
   with open(fname, 'r') as f:

@@ -27,6 +27,11 @@ def start_page(sta: str, cmd: command.Command | None, texts: list[str] | None, i
 
   keyboard.confirm(wait=keyboard.WaitNewCombat)
   if init:
+    sta, texts = state.recognize_state()
+    while sta == state.SESSION_LOADED:
+      keyboard.confirm()
+      time.sleep(1)
+      sta, texts = state.recognize_state()
     begin_wave = ocr.wave_no()[0]  # TODO
     logger.info("begin wave: {}".format(begin_wave))
 
@@ -106,11 +111,6 @@ def action_page(sta: str, cmd: command.Command, texts: list[str]):
     return True
   elif cmd.act == command.FIGHT:
     action.fight(cmd.move, cmd.side, double_idx=cmd.double_idx)
-    # TODO: ensure double battle has chosen rival
-    # status_idx, _, _ = state.recognize_state(no_wait=True)
-    # if status_idx != 1:
-    #   logger.warn("double first move {} hasn't choose side, choose default".format(cmd.move))
-    #   keyboard.confirm(keyboard.WaitShortAction)
     return True
   elif cmd.act == command.RELEASE_POKEMON:
     action.enter_pokemon_list_from_action_page()
@@ -124,10 +124,12 @@ def action_page(sta: str, cmd: command.Command, texts: list[str]):
 
 def learn_new_move(sta: str, cmd: command.Command, texts: list[str]):
   if cmd.act == command.SKIP_MOVE:
-    action.learn_new_move(new_move=cmd.move)
+    action.learn_new_move(new_move=cmd.move,
+                          step=2 if sta == state.LEARN_MOVE2 else None)
     return True
   elif cmd.act == command.LEARN_MOVE:
-    action.learn_new_move(old_move=cmd.old_move, new_move=cmd.move)
+    action.learn_new_move(old_move=cmd.old_move, new_move=cmd.move,
+                          step=2 if sta == state.LEARN_MOVE2 else None)
     return True
 
   raise Exception("state [{}] not match command {}".format(sta, cmd))
@@ -174,6 +176,7 @@ def party_full(sta: str, cmd: command.Command, texts: list[str]):
     return True
   elif cmd.act == command.REPLACE_POKEMON:
     logger.info("[Action] replace pokemon [{}]=>[{}]".format(cmd.from_p, cmd.to_p))
+    keyboard.down()
     keyboard.confirm(keyboard.WaitPokemonList)
     action.choose_pokemon(cmd.from_p, final_click=3, double=cmd.double)
     return True
@@ -184,15 +187,11 @@ def party_full(sta: str, cmd: command.Command, texts: list[str]):
 def skip_dialog(sta: str, cmd: command.Command, texts: list[str]):
   logger.debug("🕹ACT skip dialog")
   keyboard.confirm(keyboard.WaitDialog)
-  if sta == state.STARTER_ADDED:
-    pokemon = texts[-2]
-    if " has" in pokemon:
-      pokemon = pokemon[:pokemon.index(" has")]
-    logger.info("new starter: {}".format(pokemon))
-  elif sta == state.EVOLVED:
+  if sta == state.EVOLVED:
     logger.info("🕹ACT evolution: {}".format(texts[-1]))
     return cmd.act == command.EVOLVE
   return False
+
 
 
 def choose_pokemon(sta: str, cmd: command.Command, texts: list[str]):
@@ -224,7 +223,7 @@ def new_wave(sta: str, cmd: command.Command, texts: list[str]):
   if sta not in [state.TRAINER_BATTLE, state.PRE_SWITCH, state.ACTION, state.LEARN_MOVE]:
     raise Exception("Not New Wave, state: {}".format(sta))
 
-  screenshot.fullscreen(save_name="wave/{}".format(cmd_wave))  # for debug
+  # screenshot.fullscreen(save_name="wave/{}".format(cmd_wave))  # for debug
   if sta != state.TRAINER_BATTLE and cv.find_shiny():
     # TODO config
     raise Exception("🌟Shiny Pokemon!")
@@ -241,7 +240,7 @@ def get_state_func(sta):
     return pre_switch_pokemon
   elif sta in [state.SHOP, state.SHOP_WITH_LOCK]:
     return choose_reward
-  elif sta == state.LEARN_MOVE:
+  elif sta in [state.LEARN_MOVE, state.LEARN_MOVE2]:
     return learn_new_move
   elif sta == state.PARTY_FULL:
     return party_full
@@ -251,10 +250,18 @@ def get_state_func(sta):
                state.EVOLVED, state.POKEMON_CAUGHT,
                state.TRAINER_BATTLE, state.TRAINER_DEFEATED,
                state.WIN_ITEM, state.WIN_MONEY,
-               state.EGG_HATCHED, state.MOVE_UNLOCKED, state.STARTER_ADDED,
                state.LEVEL_CAP_UP]:
     return skip_dialog
-  elif sta in [state.EVOLVING, state.CLEAR_STAT]:
+  elif sta in [state.EGG_HATCHED, state.MOVE_UNLOCKED, state.STARTER_ADDED]:
+    return skip_dialog
+  elif sta in [state.EVOLVING, state.CLEAR_STAT, state.MOVE_EFFECT, state.WEATHER,
+               state.TRAINER_REPLACE, state.LOADING]:
+    return wait_dialog
+  elif sta in [state.NEW_GAME, state.MOVE_SELECTION]:
+    keyboard.cancel()
+    return wait_dialog
+  elif sta == state.COOKIE_BANNER:
+    browser.close_cookie_banner()
     return wait_dialog
 
   raise Exception("Not supported state [{}]".format(sta))
@@ -299,14 +306,22 @@ def proc_command(cmd: command.Command):
   return f(sta, cmd, texts)
 
 
-def main():
-  generator = command.cmd_generator()
+def init():
+  #command.cmd_gen()
   browser.init()
+  sta, texts = state.recognize_state()
+  if sta == state.COOKIE_BANNER:
+    browser.close_cookie_banner()
+    sta, texts = state.recognize_state()
+
+  reload_game(sta, None, texts, init=True)
+
+
+def main():
+  init()
+  generator = command.cmd_generator()
 
   try:
-    sta, texts = state.recognize_state()
-    reload_game(sta, None, texts, init=True)
-
     for cmds in generator:
       if cmds[0].wave_no and cmds[0].wave_no < begin_wave:
         continue
@@ -316,9 +331,14 @@ def main():
         # only pass command after proceed successfully
         while proc_command(cmd) is False:
           pass
+  except Exception as e:
+    logger.debug("{}".format(e))
+    time.sleep(30)
+    raise e
   finally:
     # browser.close()
-    logger.info("max score: {}".format(action.max_ocr_score))
+    logger.debug("max score: {}".format(action.max_ocr_score))
+    logger.debug("max state score: {}".format(state.cur_state_max_score))
 
 
 main()
