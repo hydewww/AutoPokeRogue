@@ -60,6 +60,14 @@ def test_switch_double4():
   assert c[1] == Command(FIGHT, move="Acrobatics", side="L", double_idx=2)
 
 
+def test_switch_double4():
+  c = recognize_cmd("Switch to Camerupt & Nature's Madness")
+  assert len(c) == 2
+  assert c[0] == Command(SWITCH_POKEMON,
+                         double_idx=1, from_p=None, to_p="Camerupt")
+  assert c[1] == Command(FIGHT, move="Nature's Madness", double_idx=2)
+
+
 def test_pre_switch_double():
   c = recognize_cmd("Pre-Switch to b & d")
   assert len(c) == 2
@@ -187,6 +195,14 @@ def test_reward_evolution_reward2():  #
                          to_p="Poliwhirl", p_click_cnt=2)
   assert c[2] == Command(LEARN_MOVE, to_p="Poliwhirl",
                          old_move="Horn Leech", move="Bounce")
+
+
+def test_reward_evolution_reward_typo():  #
+  c = recognize_cmd("Reward: Dusk Stone Doublade Skip King's Shield")
+  assert len(c) == 2
+  assert c[0] == Command(REWARD, item="Dusk Stone",
+                         to_p="Doublade", p_click_cnt=2)
+  assert c[1] == Command(SKIP_MOVE, move="King's Shield")
 
 
 def test_reward_move1():

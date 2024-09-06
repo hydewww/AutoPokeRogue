@@ -144,7 +144,6 @@ POKEMONS = (["Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Ch
              "Chi-Yu", "Roaring Moon", "Iron Valiant", "Koraidon", "Miraidon", "Walking Wake", "Iron Leaves", "Dipplin",
              "Poltchageist", "Sinistcha", "Okidogi", "Munkidori", "Fezandipiti", "Ogerpon", "Archaludon", "Hydrapple",
              "Gouging Fire", "Raging Bolt", "Iron Boulder", "Iron Crown", "Terapagos", "Pecharunt"])
-POKEMONS_PATTERN = re.compile(f"({"|".join(POKEMONS)})", re.I)
 
 
 SWITCH_MOVES = ["U-Turn", "Volt Switch", "Flip Turn", "Teleport", "Parting Shot", "Baton Pass"]

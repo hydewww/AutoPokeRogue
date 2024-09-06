@@ -201,7 +201,7 @@ def __rec_transfer(cmd: str):
   elif " > " in tmp:
     tmp = tmp.split(" > ")
     to_pokemon = tmp[1].strip()
-    match = const.POKEMONS_PATTERN.search(tmp[0])  # FIXME: multiple
+    match = text.find_pokemon(tmp[0])  # FIXME: multiple
     if not match:
       raise Exception("No match transfer [{}]".format(cmd))
 
@@ -266,7 +266,7 @@ def __rec_reward(cmd: str):
     return cmds
 
   if "TM" in reward:
-    match = const.POKEMONS_PATTERN.search(reward)
+    match = text.find_pokemon(reward)
     if not match:
       raise Exception("Invalid TM Command: {}".format(cmd))
     item = reward[:match.start()].strip()
@@ -297,15 +297,19 @@ def __rec_reward(cmd: str):
         tmp = pokemon_move.split(" > ")
         pokemon, move = tmp[0], tmp[1]
       else:
-        match = const.POKEMONS_PATTERN.search(pokemon_move)
+        match = text.find_pokemon(pokemon_move)
         if not match:
           raise Exception("Unknown reward [{}]".format(reward))
         pokemon, move = match.group(), pokemon_move[match.end():].strip()
       cmds.append(Command(REWARD, item=reward, to_p=pokemon, move=move, p_click_cnt=1))
       return cmds
-    elif key in const.ITEM_EVOLUTION and " | " in pokemon:
+    elif key in const.ITEM_EVOLUTION and ("|" in pokemon or ">" in pokemon or "skip " in pokemon.lower()):
+      if "|" not in pokemon:  # typo
+        match = text.find_pokemon(pokemon)
+        if match and pokemon[match.end()] == " ":
+          pokemon = pokemon[:match.end()] + " |" + pokemon[match.end():]
       cmds2 = __rec_move_in_reward(pokemon)
-      pokemon = pokemon[:pokemon.index(" |")]
+      pokemon = pokemon[:pokemon.index("|")]
       cmds.append(Command(REWARD, item=reward, to_p=pokemon, p_click_cnt=2))
       if cmds2:
         cmds.extend(cmds2)
@@ -422,7 +426,7 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
         if (lcmd.startswith("switch ") and
                 not (c.endswith(" L") or c.endswith(" R")) and
                 (" > " in c or
-                 const.POKEMONS_PATTERN.search(c.strip()) is not None)):  # maybe is move
+                 text.find_pokemon(c) is not None)):  # maybe is move.
           c = "Switch " + c
         elif lcmd.startswith("pre-switch "):
           c = "Pre-Switch > " + c
@@ -449,11 +453,11 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
       return [Command(LEARN_MOVE, move=tmp2[1], old_move=tmp[1], to_p=pokemon)]
 
     new, old = tmp[0].strip(), tmp[1].strip()
-    match = const.POKEMONS_PATTERN.search(old)
+    match = text.find_pokemon(old)
     if match:
       return [Command(REPLACE_POKEMON, to_p=new, from_p=old)]
 
-    match = const.POKEMONS_PATTERN.search(new)
+    match = text.find_pokemon(new)
     if match:
       if len(new) - match.end() >= const.MOVE_NAME_MIN_LEN:
         # xxx aaa > bbb
@@ -466,7 +470,7 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
     return [Command(LEARN_MOVE, move=new, old_move=old)]
 
   # rest is fight
-  if re.search(r"[^\w -]", cmd) is not None:
+  if re.search(r"[^\w \-']", cmd) is not None:
     raise Exception("Unknown command: {}".format(cmd))
 
   move, side = cmd, None
@@ -527,7 +531,7 @@ def cmd_gen():
     try:
       cmds = recognize_cmd(cmd)
     except Exception as e:
-      logger.warning("❌ line:{}, {},".format(idx + 1, e))
+      logger.warning("❌ line:{}, {}".format(idx + 1, e))
       json_lines.append("{}\n".format(e))
       has_err = True
       continue
