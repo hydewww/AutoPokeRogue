@@ -142,10 +142,11 @@ class Command:
     return True
 
 
-__re_switch = re.compile(r"^(send in|send|pick) ", re.I)
+__re_switch = re.compile(r"(^send in|^send|^pick|switch in) ", re.I)
 __re_to = re.compile(r"( for | to )", re.I)
 __re_reward = re.compile(r"^(shop|reward):* ", re.I)
 __re_all = re.compile(" all ", re.I)
+__re_not_pre = re.compile(r"\(?Not Pre-Switch\)?", re.I)
 
 
 def preproc(cmd: str):
@@ -156,14 +157,17 @@ def preproc(cmd: str):
          replace("::", ":").
          replace("Swap ", "Switch ").
          replace(" + ", " & ").
-         replace("  ", " ")
+         replace("  ", " ").
+         replace(",", "&")
          )
   cmd = __re_switch.sub("Switch > ", cmd)
   cmd = __re_to.sub(" > ", cmd)
   cmd = __re_reward.sub("Reward: ", cmd)
   cmd = __re_all.sub(" All ", cmd)
+  cmd = __re_not_pre.sub("", cmd)
   if "switch" in cmd.lower() and len(cmd.split(" ")) == 2:
     cmd = " > ".join(cmd.split(" "))
+  cmd = cmd.strip()
   return cmd
 
 
@@ -392,7 +396,7 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
     return [Command(EVOLVE, to_p=pokemon)]
 
   if lcmd.startswith("release "):
-    pokemons = cmd[len("release "):].split(", ")
+    pokemons = cmd[len("release "):].split("& ")
     return [Command(RELEASE_POKEMON, to_p=pokemons)]
 
   # throw ball
@@ -418,9 +422,9 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
         ]
 
   # double battle, split cmds
-  if " & " in cmd:
+  if "&" in cmd:
     cmds = []
-    for idx, c in enumerate(cmd.split(" & ")):
+    for idx, c in enumerate(cmd.split("&")):
       if idx == 1:
         # modify "switch a>b & c>d" => "switch a>b", "switch c>d "
         if (lcmd.startswith("switch ") and
@@ -445,12 +449,12 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
                     from_p=from_pokemon, to_p=to_pokemon)]
 
   # TODO: more solid
-  if " > " in cmd:
-    tmp = cmd.split(" > ")
+  if ">" in cmd:
+    tmp = cmd.split(">")
     if " | " in cmd:
       tmp2 = tmp[0].split(" | ")
       pokemon = tmp2[0]
-      return [Command(LEARN_MOVE, move=tmp2[1], old_move=tmp[1], to_p=pokemon)]
+      return [Command(LEARN_MOVE, move=tmp2[1].strip(), old_move=tmp[1].strip(), to_p=pokemon)]
 
     new, old = tmp[0].strip(), tmp[1].strip()
     match = text.find_pokemon(old)

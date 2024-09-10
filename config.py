@@ -14,6 +14,7 @@ class Config:
     self.SAVE_CMD_JSON = True
 
     self.WAIT_SECONDS_BEFORE_CRASH = 10
+    self.SHINY_EXIT = False
 
 
 def load_config():

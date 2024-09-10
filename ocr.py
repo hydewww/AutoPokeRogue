@@ -116,8 +116,9 @@ def pokemons_name(double=None):
 
 def pokemons_hp(double=None) -> list[str]:
   res, t = ocr(screenshot.pokemons_hp(double=double), det=False)
-  logger.debug("pokemons hp: {} ({:.2f}s)".format(res, t))
-  return [r[0].strip() for r in res]
+  hps = [r[0][0].strip() for r in res]
+  logger.debug("pokemons hp: {} ({:.2f}s)".format(hps, t))
+  return hps
 
 
 def rewards(cnt=3):

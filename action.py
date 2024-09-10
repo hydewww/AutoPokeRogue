@@ -29,7 +29,7 @@ def choose_pokemon(pokemon, double=None, final_click=2):
   rank = text.find_all_in_ocr_texts(pokemon.p, pokemons_name, min_score=min_score)
   index, score, match = rank[0][0], rank[0][1], pokemons_name[rank[0][0]]
 
-  if pokemon.hp:
+  if pokemon.hp is not None:
     flag = False
     hps = ocr.pokemons_hp(double=double)
     for i, s in rank:
@@ -42,7 +42,7 @@ def choose_pokemon(pokemon, double=None, final_click=2):
       raise Exception("not found target: {}, pokemons: {}".format(pokemon, pokemons))
   elif pokemon.lv:
     raise Exception("not support yet")
-  elif pokemon.gender:
+  elif pokemon.gender is not None:
     raise Exception("not support yet")
   elif pokemon.no:
     index, score = rank[pokemon.no-1]

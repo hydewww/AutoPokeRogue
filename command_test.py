@@ -123,6 +123,13 @@ def test_transfer5():
                          item="Leppa Berry", from_p="Landorus", to_p="Amoonguss")
 
 
+def test_transfer6():
+  c = recognize_cmd("- Transfer | Shroomish (21HP) Silk Scarf > Raticate")
+  assert len(c) == 1
+  assert c[0] == Command(TRANSFER,
+                         item="Silk Scarf", from_p="Shroomish (21HP)", to_p="Raticate")
+
+
 def test_wave():
   c = recognize_cmd("Wave 5")
   assert len(c) == 1
