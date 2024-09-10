@@ -38,6 +38,8 @@ WIN_MONEY = "Gain Money"
 EGG_HATCHED = "Egg Hatched"
 MOVE_UNLOCKED = "Move Unlocked"
 STARTER_ADDED = "Starter Added"
+EGG_SUMMARY = "Egg Summary"
+OH = "Oh?"
 
 LEVEL_CAP_UP = "Level Cap Up"
 
@@ -87,6 +89,8 @@ __match_text_to_state = {
   " hatched from the egg!": EGG_HATCHED,  # xxx hatched from the egg!
   "Egg Move unlocked: ": MOVE_UNLOCKED,  # Egg Move unlocked: xxx
   "added as a starter!": STARTER_ADDED,  # xxx has been / added as a starter!
+  "Skip to egg summary?": EGG_SUMMARY,
+  "Oh?": OH,
 
   "The level cap": LEVEL_CAP_UP,  # The level cap / has increased to xxx
 

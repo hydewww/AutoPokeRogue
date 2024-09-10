@@ -196,6 +196,11 @@ def skip_dialog(sta: str, cmd: command.Command, texts: list[str]):
 
 def hatch_egg(sta: str, cmd: command.Command, texts: list[str]):
   logger.debug("🕹ACT hatch egg")
+  if sta == state.EGG_SUMMARY:
+    keyboard.confirm(wait=keyboard.WaitDialog)
+    keyboard.cancel(wait=keyboard.WaitDialog)
+    return False
+
   num = ocr.egg_num()
   if num is not None and num > 3:
     keyboard.confirm_down()
@@ -241,8 +246,9 @@ def new_wave(sta: str, cmd: command.Command, texts: list[str]):
 
   # screenshot.fullscreen(save_name="wave/{}".format(cmd_wave))  # for debug
   if sta != state.TRAINER_BATTLE and cv.find_shiny():
-    # TODO config
-    raise Exception("🌟Shiny Pokemon!")
+    logger.info("🌟Shiny Pokemon!")
+    if conf.SHINY_EXIT:
+      exit(0)
 
   return True
 
@@ -266,9 +272,9 @@ def get_state_func(sta):
                state.EVOLVED, state.POKEMON_CAUGHT,
                state.TRAINER_BATTLE, state.TRAINER_DEFEATED,
                state.WIN_ITEM, state.WIN_MONEY,
-               state.LEVEL_CAP_UP]:
+               state.LEVEL_CAP_UP, state.OH]:
     return skip_dialog
-  elif sta in [state.EGG_HATCHED, state.MOVE_UNLOCKED, state.STARTER_ADDED]:
+  elif sta in [state.EGG_HATCHED, state.MOVE_UNLOCKED, state.STARTER_ADDED, state.EGG_SUMMARY]:
     return hatch_egg
   elif sta in [state.EVOLVING, state.CLEAR_STAT, state.MOVE_EFFECT, state.WEATHER,
                state.TRAINER_REPLACE, state.LOADING]:
@@ -295,7 +301,7 @@ def proc_command(cmd: command.Command):
     if unknown_times % 3 == 0:
       logger.info("🕹ACT try press confirm to continue")
       unknown_confirm += 1
-      screenshot.fullscreen(save_name="unknown/{}_{}".format(cmd_wave, unknown_confirm))
+      # screenshot.fullscreen(save_name="unknown/{}_{}".format(cmd_wave, unknown_confirm))  # for debug
       keyboard.confirm(keyboard.WaitDialog)
     elif unknown_times == 7:  # TODO
       raise Exception("unknown state")
