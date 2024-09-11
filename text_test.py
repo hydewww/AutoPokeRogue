@@ -31,4 +31,10 @@ def test_find_pokemon2():
 def test_find_pokemon3():
   res = find_pokemon("x crobat y")
   assert res is not None
-  assert res.group() == "crobat"
+  assert res.group().strip() == "crobat"
+
+
+def test_find_pokemon4():
+  res = find_pokemon("Parasect")
+  assert res is not None
+  assert res.group() == "Parasect"

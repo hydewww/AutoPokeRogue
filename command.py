@@ -310,8 +310,8 @@ def __rec_reward(cmd: str):
     elif key in const.ITEM_EVOLUTION and ("|" in pokemon or ">" in pokemon or "skip " in pokemon.lower()):
       if "|" not in pokemon:  # typo
         match = text.find_pokemon(pokemon)
-        if match and pokemon[match.end()] == " ":
-          pokemon = pokemon[:match.end()] + " |" + pokemon[match.end():]
+        if match and match.end() < len(pokemon)-5:
+          pokemon = pokemon[:match.end()] + "| " + pokemon[match.end():]
       cmds2 = __rec_move_in_reward(pokemon)
       pokemon = pokemon[:pokemon.index("|")]
       cmds.append(Command(REWARD, item=reward, to_p=pokemon, p_click_cnt=2))

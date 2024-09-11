@@ -104,7 +104,7 @@ def check_pokemons_correctness(pokemons):
   return True
 
 
-__re_pokemon = re.compile(r"(Mega )?({})( \(\d+ ?hp\))?".format('|'.join(const.POKEMONS)), re.I)
+__re_pokemon = re.compile(r"(^| )(Mega )?({})( \(\d+ ?hp\))?($| )".format('|'.join(const.POKEMONS)), re.I)
 
 
 def find_pokemon(text: str):
@@ -112,9 +112,4 @@ def find_pokemon(text: str):
   if match is None:
     return None
 
-  if (match.start() > 0 and text[match.start()-1] != " ") or (match.end() < len(text) and text[match.end()] != " "):
-    logger.debug("cmd: [{}] not pokemon: [{}]".format(text, match.group()))
-    return None
-
   return match
-
