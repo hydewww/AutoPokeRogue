@@ -141,6 +141,10 @@ def choose_reward(sta: str, cmd: command.Command, texts: list[str]):
     action.transfer_item(cmd.from_p, cmd.item, cmd.to_p, double=cmd.double)
     return True
 
+  if cmd.act == command.DEACTIVATE_ITEM:
+    action.deactivate_item(cmd.to_p, cmd.item, double=cmd.double)
+    return True
+
   # screenshot.fullscreen(save_name="rewards/{}".format(cmd_wave))  # for debug
   total = 3 if cmd_wave < 20 else cmd_wave // 10 + 2  # TODO
   if cmd.act == command.REROLL:

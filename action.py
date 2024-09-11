@@ -1,4 +1,4 @@
-import time
+from time import sleep
 
 import keyboard
 import ocr
@@ -223,7 +223,7 @@ def learn_new_move(old_move=None, new_move=None, step=None):
 
   # Choose
   choose_move(old_move)
-  time.sleep(keyboard.WaitDialog*2)
+  sleep(keyboard.WaitDialog*2)
   # 1,2,and... ... ... Poof!
   keyboard.confirm(wait=keyboard.WaitDialog)
   # xxx forgot how to / use xxx.
@@ -248,14 +248,29 @@ def memory_mushroom(pokemon, new_move, old_move, double=None):
   learn_new_move(old_move)
 
 
-def transfer_item(from_pokemon, item, to_pokemon, double=None):
-  # Shop Page
-  logger.info("🕹ACT transfer {} from {} to {}".format(item, from_pokemon, to_pokemon))
-
+def __from_shop_to_pokemon_list(check_team=False):
   # Shop Page => Pokemon List Page
   keyboard.down()
   keyboard.right()
+  if check_team:
+    keyboard.right()
   keyboard.confirm(keyboard.WaitPokemonList)
+
+
+def __from_pokemon_list_to_shop(check_team=False):
+  # Pokemon List Page => Shop Page
+  keyboard.cancel()
+  # back to first reward
+  keyboard.left()
+  if check_team:
+    keyboard.left()
+  keyboard.up()
+
+
+def transfer_item(from_pokemon, item, to_pokemon, double=None):
+  # Shop Page
+  logger.info("🕹ACT transfer {} from {} to {}".format(item, from_pokemon, to_pokemon))
+  __from_shop_to_pokemon_list()
 
   # open list
   choose_pokemon(from_pokemon, final_click=1, double=double)
@@ -267,12 +282,7 @@ def transfer_item(from_pokemon, item, to_pokemon, double=None):
   # transfer to to_pokemon
   choose_pokemon(to_pokemon, double=double)
 
-  # back to Shop Page
-  keyboard.cancel()
-
-  # back to first reward
-  keyboard.left()
-  keyboard.up()
+  __from_pokemon_list_to_shop()
 
 
 def save_and_quit():
@@ -336,3 +346,15 @@ def release_pokemon(p, double=None):
   keyboard.confirm(wait=keyboard.WaitShortAction)  # Release
   keyboard.confirm(wait=keyboard.WaitShortAction)  # Do you really want to release xxx？
   keyboard.confirm(wait=keyboard.WaitShortAction)  # Goodbye, xxx
+
+
+def deactivate_item(to_pokemon, item, double=None):
+  # Shop Page
+  logger.info("🕹ACT deactivate {}'s {}".format(to_pokemon, item))
+  __from_shop_to_pokemon_list(check_team=True)
+
+  choose_pokemon(to_pokemon, final_click=2, double=double)
+  sleep(keyboard.WaitDeactivate)
+  keyboard.confirm()
+
+  __from_pokemon_list_to_shop(check_team=True)

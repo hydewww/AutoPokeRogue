@@ -22,6 +22,7 @@ LEARN_MOVE = "Learn Move"
 NOT_KEEP_POKEMON = "Not Keep Pokemon"
 REPLACE_POKEMON = "Replace Pokemon"
 RELEASE_POKEMON = "Release Pokemon"
+DEACTIVATE_ITEM = "Deactivate Item"
 EVOLVE = "Evolve"
 DAILY_DONE = "Daily Done"
 
@@ -408,7 +409,7 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
 
   if lcmd.startswith("skip "):
     return [Command(SKIP_MOVE, move=cmd[len("Skip "):])]
-  if " | " in lcmd and " skip " in lcmd:
+  elif " | " in lcmd and " skip " in lcmd:
     tmp = cmd.split(" | ")[1]
     return [Command(SKIP_MOVE, move=tmp[len("skip "):])]
 
@@ -420,6 +421,9 @@ def recognize_cmd(cmd: str, double=None, double_idx=None):
           Command(FIGHT, move=move),
           Command(SWITCH_POKEMON, to_p=tmp[1].strip())
         ]
+
+  if "deactivate " in lcmd and "|" in cmd:
+    return [Command(DEACTIVATE_ITEM, to_p=cmd.split("|")[0], item=cmd.split("tivate ")[1].strip())]
 
   # double battle, split cmds
   if "&" in cmd:

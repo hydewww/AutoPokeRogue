@@ -24,9 +24,14 @@ ITEM_REST_HELD = [" Berry", "Reviver Seed", "Golden Punch", " Orb", "Wide Lens",
                   "Focus Band", "Grip Claw", "Quick Claw", "King's Rock", "Leftovers", "Form Change", "Shell Bell",
                   "Soothe Bell", "Soul Dew", "Multi Lens", "Mini Black", "Lucky Egg", "Golden Egg",
                   "Scope Lens"]
+ITEM_SILVALLY_MEMORY = ["Bug Memory", "Dark Memory", "Dragon Memory", "Electric Memory", "Fairy Memory",
+                        "Fighting Memory", "Fire Memory", "Flying Memory", "Ghost Memory", "Grass Memory",
+                        "Ground Memory", "Ice Memory", "Poison Memory", "Psychic Memory", "Rock Memory",
+                        "Steel Memory", "Water Memory"]
 
 ITEM_2CLICK = (ITEM_VITAMIN + ITEM_EVOLUTION + ITEM_MEGA_STONE + ITEM_TYPE_BOOSTING + ITEM_SPECIES_BOOSTING +
-               ITEM_REST_HELD + ITEM_REST_CONSUMABLE + ["Revive", "Potion", "Restore", "Full Heal", "Elixir"])
+               ITEM_REST_HELD + ITEM_REST_CONSUMABLE + ITEM_SILVALLY_MEMORY +
+               ["Revive", "Potion", "Restore", "Full Heal", "Elixir"])
 ITEM_1CLICK_WITH_MOVE = ITEM_PP + ["Ether"]
 
 POKEMON_NAME_MIN_LEN = 3

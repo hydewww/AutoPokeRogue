@@ -358,6 +358,13 @@ def test_replace5():
   assert c[0].from_p.gender == 1
 
 
+def test_deactivate():
+  c = recognize_cmd("- Silvally | Deactivate Grass Memory")
+  assert len(c) == 1
+  assert c[0] == Command(DEACTIVATE_ITEM, to_p="Silvally",
+                         item="Grass Memory")
+
+
 # Kricketune > Vulpix #2 (w/ full HP)
 # Transfer Gourgeist | Silk Scarf & Black Glasses > Liepard
 # Spidops | Transfer All to Cloyster
