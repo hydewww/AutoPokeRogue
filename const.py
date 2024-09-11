@@ -6,7 +6,14 @@ ITEM_VITAMIN = ["HP Up", "Protein", "Iron", "Calcium", "Zinc", "Carbos"]
 ITEM_PP = ["PP Up", "PP Max"]
 ITEM_EVOLUTION = ["Linking Cord", " Stone", "ed Pot", " Apple", " Teacup", "Black Augurite", "Scroll Of Waters",
                   "Galarica Cuff", "Galarica Wreath", "Peat Block", " Armor", "Metal Alloy", "Scroll Of Darkness",
-                  "Max Mushrooms", "Gyaradosite"]
+                  "Max Mushrooms"]
+ITEM_MEGA_STONE = ["Gengarite", "Gardevoirite", "Ampharosite", "Venusaurite", "Charizardite X", "Blastoisinite",
+                   "Mewtwonite X", "Mewtwonite Y", "Blazikenite", "Medichamite", "Houndoominite", "Aggronite",
+                   "Banettite", "Tyranitarite", "Scizorite", "Pinsirite", "Aerodactylite", "Lucarionite", "Abomasite",
+                   "Kangaskhanite", "Gyaradosite", "Absolite", "Charizardite Y", "Alakazite", "Heracronite", "Mawilite",
+                   "Manectite", "Garchompite", "Latiasite", "Latiosite", "Swampertite", "Sceptilite", "Sablenite",
+                   "Altarianite", "Galladite", "Audinite", "Metagrossite", "Sharpedonite", "Slowbronite", "Steelixite",
+                   "Pidgeotite", "Glalitite", "Diancite", "Cameruptite", "Lopunnite", "Salamencite", "Beedrillite"]
 ITEM_REST_CONSUMABLE = [" Candy", " Mint"]
 
 ITEM_TYPE_BOOSTING = ["Silk Scarf", "Black Belt", "Sharp Beak", "Poison Barb", "Soft Sand", "Hard Stone",
@@ -18,7 +25,7 @@ ITEM_REST_HELD = [" Berry", "Reviver Seed", "Golden Punch", " Orb", "Wide Lens",
                   "Soothe Bell", "Soul Dew", "Multi Lens", "Mini Black", "Lucky Egg", "Golden Egg",
                   "Scope Lens"]
 
-ITEM_2CLICK = (ITEM_VITAMIN + ITEM_EVOLUTION + ITEM_TYPE_BOOSTING + ITEM_SPECIES_BOOSTING +
+ITEM_2CLICK = (ITEM_VITAMIN + ITEM_EVOLUTION + ITEM_MEGA_STONE + ITEM_TYPE_BOOSTING + ITEM_SPECIES_BOOSTING +
                ITEM_REST_HELD + ITEM_REST_CONSUMABLE + ["Revive", "Potion", "Restore", "Full Heal", "Elixir"])
 ITEM_1CLICK_WITH_MOVE = ITEM_PP + ["Ether"]
 
